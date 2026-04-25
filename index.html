@@ -2,160 +2,208 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Tempodo – Jhunjhunu Transport</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#E65100">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tempodo">
+<title>Tempodo</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,collection,addDoc,getDocs,doc,updateDoc,deleteDoc,onSnapshot,serverTimestamp,query,orderBy,where,setDoc,getDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const cfg={apiKey:"AIzaSyAPjnSQVImg3C7WzrF5OxXpA6eBESMlbUo",authDomain:"tepmodo.firebaseapp.com",projectId:"tepmodo",storageBucket:"tepmodo.firebasestorage.app",messagingSenderId:"812259866725",appId:"1:812259866725:web:c15a623c5d2bdb696a6e8c"};
+const app=initializeApp(cfg);
+const db=getFirestore(app);
+window.db=db;
+window.FS={collection,addDoc,getDocs,doc,updateDoc,deleteDoc,onSnapshot,serverTimestamp,query,orderBy,where,setDoc,getDoc};
+window.dbReady=true;
+// Init admin if not exists
+setTimeout(async()=>{
+  try{
+    const ar=await getDoc(doc(db,'admins','main'));
+    if(!ar.exists()){
+      await setDoc(doc(db,'admins','main'),{email:'apptempodo@gmail.com',password:'Tempodo@2024',name:'Admin'});
+    }
+  }catch(e){}
+},2000);
+</script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',sans-serif}
-body{background:#f4f4f4;min-height:100vh}
-:root{--or:#E65100;--orl:#FFF3E0;--ord:#BF360C;--gr:#2E7D32;--re:#C62828;--gy:#757575;--bd:#e0e0e0;--navy:#1A237E}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:#f4f4f4;min-height:100vh;max-width:480px;margin:0 auto;position:relative}
+:root{--or:#E65100;--orl:#FFF3E0;--ord:#BF360C;--gr:#2E7D32;--re:#C62828;--gy:#757575;--bd:#e0e0e0;--navy:#1A237E;--wh:#fff}
 .screen{display:none;min-height:100vh;flex-direction:column}
 .screen.active{display:flex}
-.hdr{background:var(--or);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:600}
-.hdr-logo{width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
-.hdr h1{font-size:18px;font-weight:600;flex:1}
-.hdr-back{background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 13px;border-radius:18px;cursor:pointer;font-size:12px}
-.btn{display:block;width:100%;padding:14px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:none;text-align:center;transition:.2s;margin-bottom:8px}
+/* HEADER */
+.hdr{background:var(--or);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:600;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-logo{width:32px;height:32px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.hdr h1{font-size:17px;font-weight:600;flex:1}
+.hdr-back{background:rgba(255,255,255,.2);border:none;color:#fff;padding:5px 12px;border-radius:16px;cursor:pointer;font-size:12px}
+/* BUTTONS */
+.btn{display:block;width:100%;padding:13px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:none;text-align:center;transition:.15s;margin-bottom:8px}
+.btn:active{transform:scale(.97)}
 .btn-or{background:var(--or);color:#fff}.btn-or:hover{background:var(--ord)}
 .btn-out{background:#fff;color:var(--or);border:2px solid var(--or)}
 .btn-gr{background:var(--gr);color:#fff}
 .btn-re{background:var(--re);color:#fff}
 .btn-navy{background:var(--navy);color:#fff}
-.btn-sm{padding:8px 16px;width:auto;font-size:12px;border-radius:18px;margin-bottom:0}
+.btn-sm{padding:7px 14px;width:auto;font-size:12px;border-radius:16px;margin-bottom:0;display:inline-block}
+/* INPUTS */
 .ig{margin-bottom:13px}
 .ig label{display:block;font-size:11px;color:var(--gy);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-.ig input,.ig select{width:100%;padding:11px 13px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;background:#fff;color:#333}
-.ig input:focus,.ig select:focus{outline:none;border-color:var(--or)}
+.ig input,.ig select,.ig textarea{width:100%;padding:11px 13px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;background:#fff;color:#333;outline:none}
+.ig input:focus,.ig select:focus{border-color:var(--or)}
 .card{background:#fff;border-radius:12px;padding:15px;margin:10px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
 .scrollable{overflow-y:auto;flex:1}
 .content{padding:14px;flex:1}
 /* HOME */
-#home .hero{background:linear-gradient(135deg,#E65100,#FF6D00);padding:36px 22px 28px;color:#fff}
-#home .hero .tag{background:rgba(255,255,255,.2);display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;margin-bottom:10px}
-#home .hero h2{font-size:30px;font-weight:700;margin-bottom:4px}
-#home .hero p{font-size:13px;opacity:.85}
-.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:18px 14px}
-.role-card{background:#fff;border-radius:14px;padding:22px 14px;text-align:center;cursor:pointer;border:2px solid transparent;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.07)}
-.role-card:hover{border-color:var(--or);transform:translateY(-2px)}
-.role-card .ri{font-size:38px;margin-bottom:8px}
+.hero{background:linear-gradient(135deg,#E65100,#FF6D00);padding:32px 20px 26px;color:#fff}
+.hero-tag{background:rgba(255,255,255,.2);display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;margin-bottom:10px}
+.hero h2{font-size:28px;font-weight:800;margin-bottom:4px}
+.hero p{font-size:13px;opacity:.85}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 14px}
+.role-card{background:#fff;border-radius:14px;padding:20px 12px;text-align:center;cursor:pointer;border:2px solid transparent;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.role-card:hover,.role-card:active{border-color:var(--or);transform:translateY(-2px)}
+.role-card .ri{font-size:36px;margin-bottom:8px}
 .role-card h3{font-size:14px;color:#333;margin-bottom:3px;font-weight:600}
 .role-card p{font-size:11px;color:var(--gy)}
-.rate-bar{padding:0 14px 18px}
-.rate-bar h3{font-size:11px;color:var(--gy);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{background:var(--orl);color:var(--or);padding:5px 12px;border-radius:18px;font-size:11px;font-weight:600;border:1px solid #FFB74D}
-.admin-dot-wrap{text-align:center;padding:6px;margin-top:auto}
-.admin-dot{background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:8px;letter-spacing:5px}
-/* VEHICLE */
-.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:7px}
-.vopt{border:2px solid var(--bd);border-radius:10px;padding:13px 9px;text-align:center;cursor:pointer;transition:.2s}
+.rate-section{padding:0 14px 16px}
+.rate-section h3{font-size:11px;color:var(--gy);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--orl);color:var(--or);padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;border:1px solid #FFB74D}
+.admin-dot-wrap{text-align:center;padding:8px 0 16px;margin-top:auto}
+.admin-dot{background:none;border:none;color:#ddd;font-size:20px;cursor:pointer;padding:8px;letter-spacing:6px}
+/* VEHICLE SELECT */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
+.vopt{border:2px solid var(--bd);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;transition:.15s}
 .vopt.sel{border-color:var(--or);background:var(--orl)}
-.vopt .vi{font-size:26px;margin-bottom:5px}
+.vopt .vi{font-size:24px;margin-bottom:5px}
 .vopt .vn{font-size:12px;font-weight:600;color:#333}
 .vopt .vr{font-size:10px;color:var(--gy);margin-top:2px}
-.km-val{text-align:center;font-size:22px;font-weight:700;color:var(--or);margin:4px 0}
-input[type=range]{width:100%;accent-color:var(--or)}
 /* PRICE BOX */
-.pbox{background:var(--orl);border:1px solid #FFB74D;border-radius:12px;padding:15px;margin:10px 0}
+.pbox{background:var(--orl);border:1px solid #FFB74D;border-radius:12px;padding:14px;margin:10px 0}
 .pbox-title{font-size:11px;color:var(--or);font-weight:700;text-transform:uppercase;margin-bottom:10px}
-.prow{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.prow{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
 .pk{color:#666}.pv{font-weight:600;color:#333}
-.ptotal{border-top:1px solid #FFB74D;margin-top:9px;padding-top:9px;display:flex;justify-content:space-between;align-items:center}
+.ptotal{border-top:1px solid #FFB74D;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;align-items:center}
 .pl{font-size:13px;font-weight:700;color:var(--or)}
-.pa{font-size:26px;font-weight:700;color:var(--or)}
-.pnote{font-size:10px;color:var(--ord);margin-top:5px}
+.pa{font-size:24px;font-weight:800;color:var(--or)}
+.pnote{font-size:10px;color:var(--ord);margin-top:4px}
+input[type=range]{width:100%;accent-color:var(--or)}
+.km-val{text-align:center;font-size:20px;font-weight:700;color:var(--or);margin:4px 0}
+/* LOCATION SEARCH */
+.loc-wrap{position:relative}
+.loc-results{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--or);border-top:none;border-radius:0 0 8px 8px;z-index:300;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.loc-item{padding:10px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--bd);color:#333}
+.loc-item:hover{background:var(--orl)}
+.loc-item:last-child{border-bottom:none}
 /* MAP */
-#map-wrap,#driver-map-wrap{flex:1;position:relative;min-height:50vh}
-#the-map,#driver-the-map{width:100%;height:100%;min-height:50vh}
-.map-top{position:absolute;top:10px;left:10px;right:10px;z-index:400;background:#fff;border-radius:12px;padding:11px 14px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
-.ri2{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:3px}
-.rdg{width:10px;height:10px;border-radius:50%;background:#4CAF50;flex-shrink:0}
-.rdr{width:10px;height:10px;border-radius:50%;background:var(--re);flex-shrink:0}
-/* LIVE CARD */
-.dlc{background:#fff;padding:13px 15px;border-top:1px solid var(--bd)}
-.dlc-row{display:flex;align-items:center;gap:11px;margin-bottom:9px}
-.dlc-av{width:44px;height:44px;border-radius:50%;background:var(--or);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
-.dlc-nm{font-size:14px;font-weight:600;color:#333}
-.dlc-veh{font-size:11px;color:var(--gy)}
-.dlc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.dls{background:#f4f4f4;border-radius:8px;padding:9px;text-align:center}
-.dsv{font-size:16px;font-weight:700;color:#333}
-.dsl{font-size:10px;color:var(--gy);margin-top:2px}
-/* BOOKING DET */
-.bdet{background:#fff;border-radius:12px;padding:14px;width:100%;margin:14px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+#cust-map-wrap,#drv-map-wrap,#admin-map-wrap{position:relative}
+#cust-map,#drv-track-map,#admin-map{width:100%;border-radius:10px}
+.map-overlay{position:absolute;top:10px;left:10px;right:10px;z-index:400;background:#fff;border-radius:10px;padding:10px 13px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+/* BOOKING TRACK */
+.track-screen{flex:1;display:flex;flex-direction:column}
+#track-map{flex:1;min-height:50vh}
+.track-info{background:#fff;padding:14px 16px;border-top:1px solid var(--bd)}
+.drv-row-live{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.drv-av{width:44px;height:44px;border-radius:50%;background:var(--or);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
+.live-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.ls-box{background:#f4f4f4;border-radius:8px;padding:9px;text-align:center}
+.ls-val{font-size:16px;font-weight:700;color:#333}
+.ls-lbl{font-size:10px;color:var(--gy);margin-top:2px}
+/* BDET */
+.bdet{background:#fff;border-radius:10px;padding:13px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
 .drow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bd);font-size:13px}
 .drow:last-child{border-bottom:none}
 .dk{color:var(--gy)}.dv{font-weight:600;color:#333}
 /* DOCS */
-.doc-item{display:flex;align-items:center;gap:11px;padding:11px;border:1.5px solid var(--bd);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:.2s}
+.doc-item{display:flex;align-items:center;gap:10px;padding:11px;border:1.5px solid var(--bd);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:.15s}
 .doc-item.upl{border-color:var(--gr);background:#F1F8E9}
-.doc-ic{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:19px;background:#f4f4f4;flex-shrink:0}
+.doc-ic{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#f4f4f4;flex-shrink:0}
 .doc-inf{flex:1}
 .doc-nm{font-size:13px;font-weight:600;color:#333}
 .doc-st{font-size:11px;color:var(--gy);margin-top:2px}
-.dbadge{font-size:10px;padding:3px 9px;border-radius:18px;font-weight:600}
-.miss{background:#FFEBEE;color:var(--re)}.done{background:#E8F5E9;color:var(--gr)}.pend{background:#FFF9C4;color:#F57F17}
+.dbadge{font-size:10px;padding:3px 9px;border-radius:16px;font-weight:600}
+.b-miss{background:#FFEBEE;color:var(--re)}.b-done{background:#E8F5E9;color:var(--gr)}.b-pend{background:#FFF9C4;color:#F57F17}
 /* DRIVER DASH */
-.sbar{background:#fff;padding:13px 18px;display:flex;align-items:center;border-bottom:1px solid var(--bd)}
+.sbar{background:#fff;padding:12px 16px;display:flex;align-items:center;border-bottom:1px solid var(--bd)}
 .sdot{width:12px;height:12px;border-radius:50%;background:#4CAF50;margin-right:8px;flex-shrink:0}
 .sdot.off{background:#bbb}
 .stxt{font-size:14px;font-weight:600;flex:1}
-.stog{padding:8px 18px;border-radius:18px;border:none;cursor:pointer;font-size:12px;font-weight:600}
+.stog{padding:7px 16px;border-radius:16px;border:none;cursor:pointer;font-size:12px;font-weight:600}
 .eg{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:14px}
-.ec{background:#fff;border-radius:10px;padding:13px 9px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.ev{font-size:17px;font-weight:700;color:#333}
+.ec{background:#fff;border-radius:10px;padding:12px 9px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.ev{font-size:16px;font-weight:700;color:#333}
 .el{font-size:10px;color:var(--gy);margin-top:3px}
-.req-card{margin:0 14px 14px;border:2px solid #FFB74D;border-radius:12px;padding:15px;background:#FFFDE7}
+.req-card{margin:0 14px 14px;border:2px solid #FFB74D;border-radius:12px;padding:14px;background:#FFFDE7}
 .rh{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.rh h3{font-size:15px;font-weight:700;color:var(--or)}
-.rrow{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:13px}
-.rprice{font-size:18px;font-weight:700;color:var(--or);margin:8px 0}
+.rh h3{font-size:14px;font-weight:700;color:var(--or)}
+.rrow{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:13px;color:#333}
+.rprice{font-size:18px;font-weight:700;color:var(--or);margin:6px 0}
 .racts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
 /* ADMIN */
-.ahdr{background:var(--navy);padding:20px 18px;color:#fff}
-.ahdr h2{font-size:17px;font-weight:700}
-.ahdr p{font-size:11px;opacity:.7;margin-top:3px}
+.ahdr{background:var(--navy);padding:18px 16px;color:#fff}
+.ahdr h2{font-size:16px;font-weight:700}
+.ahdr p{font-size:11px;opacity:.7;margin-top:2px}
 .sg{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:14px}
-.sc{background:#fff;border-radius:10px;padding:13px 9px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.sv{font-size:22px;font-weight:700;color:#333}
+.sc{background:#fff;border-radius:10px;padding:12px 8px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.sv{font-size:20px;font-weight:700;color:#333}
 .sl{font-size:10px;color:var(--gy);margin-top:3px}
-.stitle{font-size:12px;font-weight:700;color:#333;padding:6px 14px;text-transform:uppercase;letter-spacing:.4px}
-.drow2{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--bd);background:#fff}
-.dav{width:40px;height:40px;border-radius:50%;background:var(--or);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.stitle{font-size:11px;font-weight:700;color:#333;padding:8px 14px 4px;text-transform:uppercase;letter-spacing:.4px}
+.drv-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--bd);background:#fff}
+.dav{width:38px;height:38px;border-radius:50%;background:var(--or);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
 .dinf{flex:1}
 .dnm{font-size:13px;font-weight:600;color:#333}
 .ddt{font-size:11px;color:var(--gy);margin-top:2px}
-.abtn{padding:6px 13px;border-radius:18px;border:none;cursor:pointer;font-size:11px;font-weight:600}
-.ap{background:#FFF9C4;color:#F57F17}.aok{background:#E8F5E9;color:var(--gr)}.av{background:#E3F2FD;color:#1565C0}
+.abtn{padding:5px 12px;border-radius:16px;border:none;cursor:pointer;font-size:11px;font-weight:600}
+.a-pend{background:#FFF9C4;color:#F57F17}.a-ok{background:#E8F5E9;color:var(--gr)}.a-rej{background:#FFEBEE;color:var(--re)}.a-view{background:#E3F2FD;color:#1565C0}
 .bki{background:#fff;margin:0 14px 8px;border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
-.bkid{font-size:10px;color:var(--gy)}
-.bkr{font-size:13px;font-weight:600;color:#333;margin:4px 0}
-.bkm{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--gy);flex-wrap:wrap}
-.sb{font-size:10px;padding:3px 9px;border-radius:18px;font-weight:600}
-.sb-ok{background:#E8F5E9;color:var(--gr)}.sb-live{background:#FFF9C4;color:#F57F17}.sb-cancel{background:#FFEBEE;color:var(--re)}
+.bkid{font-size:10px;color:var(--gy);margin-bottom:3px}
+.bkr{font-size:13px;font-weight:600;color:#333;margin-bottom:4px}
+.bkm{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--gy);flex-wrap:wrap}
+.sb{font-size:10px;padding:3px 9px;border-radius:16px;font-weight:600}
+.sb-ok{background:#E8F5E9;color:var(--gr)}.sb-live{background:#FFF9C4;color:#F57F17}.sb-cancel{background:#FFEBEE;color:var(--re)}.sb-pend{background:#E3F2FD;color:#1565C0}
 /* RATES */
 .rmgr{margin:0 14px 12px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)}
-.rhdr{background:var(--orl);padding:11px 14px;font-size:12px;font-weight:700;color:var(--or);text-transform:uppercase;letter-spacing:.4px}
+.rhdr{background:var(--orl);padding:10px 14px;font-size:12px;font-weight:700;color:var(--or);text-transform:uppercase}
 .rrate{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--bd);background:#fff}
 .rrate:last-child{border-bottom:none}
 .rl{flex:1;font-size:13px;color:#333}
-.ri3{width:70px;padding:6px 9px;border:1.5px solid var(--bd);border-radius:6px;font-size:13px;text-align:center}
-.ri3:focus{outline:none;border-color:var(--or)}
-.ru{font-size:11px;color:var(--gy);margin-left:5px;width:32px}
+.ri{width:70px;padding:6px 8px;border:1.5px solid var(--bd);border-radius:6px;font-size:13px;text-align:center}
+.ri:focus{outline:none;border-color:var(--or)}
+.ru{font-size:11px;color:var(--gy);margin-left:5px;width:34px}
 /* TABS */
 .tabs{display:flex;border-bottom:2px solid var(--bd);background:#fff;position:sticky;top:0;z-index:100}
-.tab{flex:1;padding:11px 5px;text-align:center;font-size:11px;font-weight:600;color:var(--gy);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s}
+.tab{flex:1;padding:11px 4px;text-align:center;font-size:11px;font-weight:600;color:var(--gy);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.2s}
 .tab.active{color:var(--navy);border-bottom-color:var(--navy)}
-.tpane{display:none}
-.tpane.active{display:block}
+.tpane{display:none}.tpane.active{display:block}
 /* ADMIN LOGIN */
-#admin-login .content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 22px}
-/* TOAST */
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:11px 22px;border-radius:22px;font-size:13px;z-index:2000;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw}
-.toast.show{opacity:1}
+#admin-login .content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 20px}
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:30px;flex-direction:column;gap:10px}
+.spinner{width:32px;height:32px;border-radius:50%;border:3px solid var(--bd);border-top-color:var(--or);animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .pulse{animation:pulse 1.4s infinite}
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1}
+/* STATUS BADGES */
+.online-badge{display:inline-flex;align-items:center;gap:5px;background:#E8F5E9;color:var(--gr);padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.offline-badge{display:inline-flex;align-items:center;gap:5px;background:#f4f4f4;color:#999;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.dot-g{width:8px;height:8px;border-radius:50%;background:#4CAF50;animation:pulse 1.4s infinite}
+.dot-g.off{background:#bbb;animation:none}
+/* EMPTY STATE */
+.empty{text-align:center;padding:32px 20px;color:var(--gy)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty p{font-size:14px}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:800;display:none;align-items:flex-end}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;margin:0 auto;padding:20px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;color:#333}
 </style>
 </head>
 <body>
@@ -163,9 +211,9 @@ input[type=range]{width:100%;accent-color:var(--or)}
 <!-- HOME -->
 <div class="screen active" id="home">
   <div class="hero">
-    <div class="tag">🚛 Jhunjhunu District Transport</div>
+    <div class="hero-tag">🚛 Jhunjhunu District Transport</div>
     <h2>Tempodo</h2>
-    <p>KM ke hisaab se bilkul fair kiraya — Porter se bhi sasta!</p>
+    <p>KM ke hisaab se bilkul fair kiraya</p>
   </div>
   <div class="role-grid">
     <div class="role-card" onclick="goTo('customer')">
@@ -175,9 +223,9 @@ input[type=range]{width:100%;accent-color:var(--or)}
       <div class="ri">🚛</div><h3>Driver</h3><p>Trip leke kamaao</p>
     </div>
   </div>
-  <div class="rate-bar">
-    <h3>Live Rates</h3>
-    <div class="chips">
+  <div class="rate-section">
+    <h3>Current Rates</h3>
+    <div class="chips" id="home-rates">
       <span class="chip">🛺 3-Wheeler ₹12/km</span>
       <span class="chip">🚐 Tempo ₹15/km</span>
       <span class="chip">🛻 Pickup ₹18/km</span>
@@ -191,69 +239,105 @@ input[type=range]{width:100%;accent-color:var(--or)}
 
 <!-- CUSTOMER BOOKING -->
 <div class="screen" id="customer">
-  <div class="hdr"><div class="hdr-logo">T</div><h1>Book a Vehicle</h1><button class="hdr-back" onclick="goTo('home')">← Wapas</button></div>
+  <div class="hdr"><div class="hdr-logo">T</div><h1>Booking</h1><button class="hdr-back" onclick="goTo('home')">← Wapas</button></div>
   <div class="content scrollable">
-    <div class="ig"><label>📍 Pickup Location</label><input type="text" id="pickup" placeholder="e.g. Nawalgarh, Mandawa, Bissau..."></div>
-    <div class="ig"><label>🏁 Drop Location</label><input type="text" id="drop" placeholder="e.g. Jhunjhunu, Chirawa, Pilani..."></div>
+
+    <!-- PICKUP LOCATION -->
+    <div class="ig">
+      <label>📍 Pickup Location</label>
+      <div class="loc-wrap">
+        <input type="text" id="pickup-inp" placeholder="Pickup jagah likho ya map se chuno..." autocomplete="off" oninput="searchLoc(this,'pickup-res','pickup')" onfocus="searchLoc(this,'pickup-res','pickup')">
+        <div class="loc-results" id="pickup-res" style="display:none"></div>
+      </div>
+      <div id="pickup-val" style="font-size:11px;color:var(--gr);margin-top:4px;display:none">✓ Location select ho gayi</div>
+    </div>
+
+    <!-- DROP LOCATION -->
+    <div class="ig">
+      <label>🏁 Drop Location</label>
+      <div class="loc-wrap">
+        <input type="text" id="drop-inp" placeholder="Drop jagah likho ya map se chuno..." autocomplete="off" oninput="searchLoc(this,'drop-res','drop')" onfocus="searchLoc(this,'drop-res','drop')">
+        <div class="loc-results" id="drop-res" style="display:none"></div>
+      </div>
+      <div id="drop-val" style="font-size:11px;color:var(--gr);margin-top:4px;display:none">✓ Location select ho gayi</div>
+    </div>
+
+    <!-- MAP WITH NEARBY DRIVERS -->
+    <div class="ig">
+      <label>🗺️ Map — Online Drivers Dekho</label>
+      <div id="cust-map-wrap">
+        <div id="cust-map" style="height:220px;border-radius:10px;border:1.5px solid var(--bd)"></div>
+      </div>
+      <div id="nearby-count" style="font-size:12px;color:var(--gr);margin-top:5px;font-weight:600"></div>
+    </div>
+
+    <!-- VEHICLE -->
     <div class="ig">
       <label>🚛 Vehicle Chuno</label>
       <div class="vgrid">
-        <div class="vopt" onclick="selV(this,'3-Wheeler',50,12,80,'🛺')"><div class="vi">🛺</div><div class="vn">3-Wheeler</div><div class="vr">₹50+₹12/km</div></div>
-        <div class="vopt" onclick="selV(this,'Tempo',80,15,120,'🚐')"><div class="vi">🚐</div><div class="vn">Tempo</div><div class="vr">₹80+₹15/km</div></div>
-        <div class="vopt" onclick="selV(this,'Pickup',100,18,150,'🛻')"><div class="vi">🛻</div><div class="vn">Pickup</div><div class="vr">₹100+₹18/km</div></div>
-        <div class="vopt sel" onclick="selV(this,'Mini Truck',120,22,200,'🚛')"><div class="vi">🚛</div><div class="vn">Mini Truck</div><div class="vr">₹120+₹22/km</div></div>
+        <div class="vopt" onclick="selV(this,'3-Wheeler',50,12,80,'🛺')" id="v1"><div class="vi">🛺</div><div class="vn">3-Wheeler</div><div class="vr">₹50+₹12/km</div></div>
+        <div class="vopt" onclick="selV(this,'Tempo',80,15,120,'🚐')" id="v2"><div class="vi">🚐</div><div class="vn">Tempo</div><div class="vr">₹80+₹15/km</div></div>
+        <div class="vopt" onclick="selV(this,'Pickup',100,18,150,'🛻')" id="v3"><div class="vi">🛻</div><div class="vn">Pickup</div><div class="vr">₹100+₹18/km</div></div>
+        <div class="vopt sel" onclick="selV(this,'Mini Truck',120,22,200,'🚛')" id="v4"><div class="vi">🚛</div><div class="vn">Mini Truck</div><div class="vr">₹120+₹22/km</div></div>
       </div>
     </div>
+
+    <!-- KM -->
     <div class="ig">
-      <label>📏 Distance (approximate KM)</label>
+      <label>📏 Distance (KM)</label>
       <div class="km-val" id="km-val">20 KM</div>
       <input type="range" min="1" max="150" value="20" id="km-sl" oninput="calcPrice()">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gy);margin-top:3px"><span>1 km</span><span>75 km</span><span>150 km</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gy);margin-top:2px"><span>1km</span><span>75km</span><span>150km</span></div>
     </div>
+
+    <!-- PRICE -->
     <div class="pbox">
       <div class="pbox-title">💰 Kiraya Calculator</div>
       <div class="prow"><span class="pk" id="vname-d">🚛 Mini Truck</span></div>
       <div class="prow"><span class="pk">Base Charge</span><span class="pv" id="base-d">₹120</span></div>
       <div class="prow"><span class="pk" id="kmr-d">20 km × ₹22</span><span class="pv" id="kmc-d">₹440</span></div>
       <div class="ptotal"><span class="pl">Total Kiraya</span><span class="pa" id="tot-d">₹560</span></div>
-      <div class="pnote">⚠️ Ye estimate hai — final price driver se confirm hogi</div>
+      <div class="pnote">⚠️ Ye estimate hai — driver se confirm hogi</div>
     </div>
-    <div class="ig"><label>📱 Aapka Phone</label><input type="tel" id="cust-phone" placeholder="+91 98765 43210"></div>
-    <div class="ig"><label>📝 Special Instruction (optional)</label><input type="text" id="cust-note" placeholder="e.g. fragile saman hai..."></div>
-    <button class="btn btn-or" onclick="bookNow()">🚛 Book Now</button>
+
+    <div class="ig"><label>📱 Aapka Phone</label><input type="tel" id="cust-phone" placeholder="+91 98765 43210" maxlength="13"></div>
+    <div class="ig"><label>👤 Aapka Naam</label><input type="text" id="cust-name" placeholder="Naam likhо"></div>
+    <div class="ig"><label>📝 Note (optional)</label><input type="text" id="cust-note" placeholder="Koi special baat..."></div>
+    <button class="btn btn-or" onclick="bookNow()" id="book-btn">🚛 Booking Karo</button>
     <br>
   </div>
 </div>
 
-<!-- CUSTOMER LIVE TRACKING -->
-<div class="screen" id="booking-confirm">
+<!-- TRACKING SCREEN -->
+<div class="screen" id="tracking">
   <div class="hdr"><div class="hdr-logo">T</div><h1>Live Tracking</h1><button class="hdr-back" onclick="goTo('home')">Home</button></div>
-  <div id="map-wrap">
-    <div id="the-map"></div>
-    <div class="map-top">
-      <div class="ri2"><div class="rdg"></div><span id="mt-p" style="font-size:12px;font-weight:600">Pickup...</span></div>
-      <div style="margin-left:4px;border-left:2px dashed #ccc;height:10px;margin-bottom:2px;padding-left:3px"></div>
-      <div class="ri2"><div class="rdr"></div><span id="mt-d" style="font-size:12px;font-weight:600">Drop...</span></div>
+  <div class="track-screen">
+    <div id="track-map"></div>
+    <div class="track-info scrollable">
+      <div class="drv-row-live">
+        <div class="drv-av" id="trk-av">?</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600;color:#333" id="trk-drv-name">Driver dhundh raha hai...</div>
+          <div style="font-size:11px;color:var(--gy)" id="trk-drv-veh">Kuch minton mein driver milega</div>
+        </div>
+        <button class="btn btn-or btn-sm" id="trk-call-btn" style="display:none" onclick="callDriver()">📞 Call</button>
+      </div>
+      <div class="live-stats">
+        <div class="ls-box"><div class="ls-val" id="trk-eta">--</div><div class="ls-lbl">Minutes</div></div>
+        <div class="ls-box"><div class="ls-val" id="trk-dist">--</div><div class="ls-lbl">KM door</div></div>
+        <div class="ls-box"><div class="ls-val" id="trk-price">--</div><div class="ls-lbl">Kiraya</div></div>
+      </div>
+      <div class="bdet">
+        <div class="drow"><span class="dk">Booking ID</span><span class="dv" id="trk-bid">--</span></div>
+        <div class="drow"><span class="dk">Pickup</span><span class="dv" id="trk-pickup">--</span></div>
+        <div class="drow"><span class="dk">Drop</span><span class="dv" id="trk-drop">--</span></div>
+        <div class="drow"><span class="dk">Vehicle</span><span class="dv" id="trk-veh">--</span></div>
+        <div class="drow"><span class="dk">Status</span><span class="dv" id="trk-status" style="color:var(--or)">Searching...</span></div>
+      </div>
+      <br>
+      <button class="btn btn-out" onclick="goTo('home')">Naya Booking</button>
+      <br>
     </div>
-  </div>
-  <div class="dlc">
-    <div class="dlc-row">
-      <div class="dlc-av">RK</div>
-      <div style="flex:1"><div class="dlc-nm" id="drv-ln">Driver dhundh raha hai...</div><div class="dlc-veh" id="drv-lv">🚛 Mini Truck &nbsp;<span class="pulse" id="ls">📡 Connecting...</span></div></div>
-      <button class="btn btn-or btn-sm" onclick="toast('Driver ko call: +91 94622 XXXXX')">📞 Call</button>
-    </div>
-    <div class="dlc-stats">
-      <div class="dls"><div class="dsv" id="eta-v">--</div><div class="dsl">Min mein</div></div>
-      <div class="dls"><div class="dsv" id="dist-v">--</div><div class="dsl">KM door</div></div>
-      <div class="dls"><div class="dsv" id="pr-v">--</div><div class="dsl">Kiraya</div></div>
-    </div>
-    <div class="bdet" style="margin:10px 0 8px">
-      <div class="drow"><span class="dk">Booking ID</span><span class="dv" id="b-id">--</span></div>
-      <div class="drow"><span class="dk">Vehicle</span><span class="dv" id="b-veh">--</span></div>
-      <div class="drow"><span class="dk">Kiraya</span><span class="dv" id="b-price" style="color:var(--or)">--</span></div>
-      <div class="drow"><span class="dk">Status</span><span class="dv" id="b-st" style="color:var(--or)">Searching...</span></div>
-    </div>
-    <button class="btn btn-out" onclick="goTo('home')">Naya Booking</button>
   </div>
 </div>
 
@@ -262,70 +346,96 @@ input[type=range]{width:100%;accent-color:var(--or)}
   <div class="hdr"><div class="hdr-logo">T</div><h1>Driver Registration</h1><button class="hdr-back" onclick="goTo('home')">← Wapas</button></div>
   <div class="content scrollable">
     <div class="ig"><label>👤 Poora Naam</label><input type="text" id="drv-name" placeholder="Aapka full name"></div>
-    <div class="ig"><label>📱 Phone Number</label><input type="tel" id="drv-phone" placeholder="+91 98765 43210"></div>
-    <div class="ig"><label>🚛 Vehicle Type</label><select id="drv-veh"><option>3-Wheeler Tempo</option><option>Tempo</option><option>Pickup</option><option>Mini Truck</option></select></div>
-    <div class="ig"><label>📍 Aapka Shahar</label><select id="drv-city"><option>Jhunjhunu</option><option>Nawalgarh</option><option>Mandawa</option><option>Chirawa</option><option>Bissau</option><option>Pilani</option><option>Surajgarh</option><option>Buhana</option><option>Khetri</option><option>Udaipurwati</option><option>Singhana</option><option>Malsisar</option></select></div>
-    <div class="ig"><label>🚗 Vehicle Number</label><input type="text" id="drv-vnum" placeholder="e.g. RJ 25 GA 1234"></div>
-    <div class="ig">
-      <label>📄 Documents (sab zaroori hain)</label>
-      <div class="doc-item" id="ddl" onclick="markDoc('dl','Driving License','ddl','bdl')"><div class="doc-ic">📋</div><div class="doc-inf"><div class="doc-nm">Driving License</div><div class="doc-st">Tap karke mark karo</div></div><span class="dbadge miss" id="bdl">Upload</span></div>
-      <div class="doc-item" id="drc" onclick="markDoc('rc','Vehicle RC','drc','brc')"><div class="doc-ic">🚗</div><div class="doc-inf"><div class="doc-nm">Vehicle RC</div><div class="doc-st">Tap karke mark karo</div></div><span class="dbadge miss" id="brc">Upload</span></div>
-      <div class="doc-item" id="daad" onclick="markDoc('aad','Aadhar Card','daad','baad')"><div class="doc-ic">🪪</div><div class="doc-inf"><div class="doc-nm">Aadhar Card</div><div class="doc-st">Tap karke mark karo</div></div><span class="dbadge miss" id="baad">Upload</span></div>
-      <div class="doc-item" id="dpho" onclick="markDoc('pho','Vehicle Photo','dpho','bpho')"><div class="doc-ic">📷</div><div class="doc-inf"><div class="doc-nm">Vehicle Photo</div><div class="doc-st">Tap karke mark karo</div></div><span class="dbadge miss" id="bpho">Upload</span></div>
-      <div class="doc-item" id="dins" onclick="markDoc('ins','Insurance','dins','bins')"><div class="doc-ic">📜</div><div class="doc-inf"><div class="doc-nm">Vehicle Insurance</div><div class="doc-st">Tap karke mark karo</div></div><span class="dbadge miss" id="bins">Upload</span></div>
+    <div class="ig"><label>📱 Phone Number</label><input type="tel" id="drv-phone" placeholder="+91 98765 43210" maxlength="13"></div>
+    <div class="ig"><label>🚛 Vehicle Type</label>
+      <select id="drv-veh"><option>3-Wheeler Tempo</option><option>Tempo</option><option>Pickup</option><option>Mini Truck</option></select>
     </div>
-    <button class="btn btn-or" onclick="submitReg()">Submit for Approval ✓</button>
-    <button class="btn btn-out" onclick="goTo('driver-dash')">Already Registered? Login</button>
+    <div class="ig"><label>🚗 Vehicle Number</label><input type="text" id="drv-vnum" placeholder="e.g. RJ 25 GA 1234" style="text-transform:uppercase"></div>
+    <div class="ig"><label>📍 Aapka Shahar</label>
+      <select id="drv-city"><option>Jhunjhunu</option><option>Nawalgarh</option><option>Mandawa</option><option>Chirawa</option><option>Bissau</option><option>Pilani</option><option>Surajgarh</option><option>Buhana</option><option>Khetri</option><option>Udaipurwati</option><option>Singhana</option><option>Malsisar</option></select>
+    </div>
+    <div class="ig">
+      <label>📄 Documents (Sab Required)</label>
+      <div class="doc-item" id="d-dl" onclick="markDoc('dl','Driving License','d-dl','b-dl')"><div class="doc-ic">📋</div><div class="doc-inf"><div class="doc-nm">Driving License</div><div class="doc-st">Tap karo — ready hai confirm karo</div></div><span class="dbadge b-miss" id="b-dl">Upload</span></div>
+      <div class="doc-item" id="d-rc" onclick="markDoc('rc','Vehicle RC','d-rc','b-rc')"><div class="doc-ic">🚗</div><div class="doc-inf"><div class="doc-nm">Vehicle RC (Registration)</div><div class="doc-st">Tap karo</div></div><span class="dbadge b-miss" id="b-rc">Upload</span></div>
+      <div class="doc-item" id="d-ad" onclick="markDoc('ad','Aadhar Card','d-ad','b-ad')"><div class="doc-ic">🪪</div><div class="doc-inf"><div class="doc-nm">Aadhar Card</div><div class="doc-st">Tap karo</div></div><span class="dbadge b-miss" id="b-ad">Upload</span></div>
+      <div class="doc-item" id="d-ph" onclick="markDoc('ph','Vehicle Photo','d-ph','b-ph')"><div class="doc-ic">📷</div><div class="doc-inf"><div class="doc-nm">Vehicle Photo</div><div class="doc-st">Tap karo</div></div><span class="dbadge b-miss" id="b-ph">Upload</span></div>
+      <div class="doc-item" id="d-in" onclick="markDoc('in','Insurance','d-in','b-in')"><div class="doc-ic">📜</div><div class="doc-inf"><div class="doc-nm">Vehicle Insurance</div><div class="doc-st">Tap karo</div></div><span class="dbadge b-miss" id="b-in">Upload</span></div>
+    </div>
+    <button class="btn btn-or" onclick="submitReg()">✓ Submit for Approval</button>
+    <button class="btn btn-out" onclick="goTo('driver-login')">Pehle Se Registered? Login</button>
     <br>
+  </div>
+</div>
+
+<!-- DRIVER LOGIN -->
+<div class="screen" id="driver-login">
+  <div class="hdr"><div class="hdr-logo">T</div><h1>Driver Login</h1><button class="hdr-back" onclick="goTo('home')">← Wapas</button></div>
+  <div class="content">
+    <div style="font-size:52px;text-align:center;margin:16px 0">🚛</div>
+    <div class="ig"><label>📱 Registered Phone Number</label><input type="tel" id="login-phone" placeholder="+91 98765 43210" maxlength="13"></div>
+    <button class="btn btn-or" onclick="driverLogin()">Login →</button>
+    <button class="btn btn-out" style="margin-top:4px" onclick="goTo('driver-reg')">Naya Registration</button>
   </div>
 </div>
 
 <!-- DRIVER DASHBOARD -->
 <div class="screen" id="driver-dash">
-  <div class="hdr"><div class="hdr-logo">T</div><h1>Driver Dashboard</h1><button class="hdr-back" onclick="goTo('home')">Home</button></div>
+  <div class="hdr"><div class="hdr-logo">T</div><h1>Driver Dashboard</h1><button class="hdr-back" onclick="drvLogout()">Logout</button></div>
   <div class="sbar">
     <div class="sdot" id="sdot"></div>
-    <span class="stxt" id="stxt">Online — Ready hai</span>
-    <button class="stog" id="stog" style="background:#FFEBEE;color:var(--re)" onclick="toggleOnline()">Offline Jao</button>
+    <div style="flex:1">
+      <div class="stxt" id="stxt">Online</div>
+      <div style="font-size:11px;color:var(--gy)" id="drv-name-show"></div>
+    </div>
+    <button class="stog" id="stog" onclick="toggleOnline()">Offline Jao</button>
   </div>
   <div class="scrollable">
     <div class="eg">
-      <div class="ec"><div class="ev">₹1,364</div><div class="el">Gross aaj</div></div>
-      <div class="ec"><div class="ev">₹1,228</div><div class="el">Net (10% cut)</div></div>
-      <div class="ec"><div class="ev">4.8⭐</div><div class="el">Rating</div></div>
+      <div class="ec"><div class="ev" id="drv-earn-today">₹0</div><div class="el">Aaj Net</div></div>
+      <div class="ec"><div class="ev" id="drv-trips-today">0</div><div class="el">Trips</div></div>
+      <div class="ec"><div class="ev" id="drv-rating">--</div><div class="el">Rating</div></div>
     </div>
-    <div class="req-card" id="req-card">
-      <div class="rh"><span style="font-size:20px">🔔</span><h3>Naya Booking Request!</h3></div>
-      <div class="rrow">📍 <strong>Nawalgarh → Jhunjhunu City</strong></div>
-      <div class="rrow">📏 Distance: <strong>35 km</strong></div>
-      <div class="rrow">🚛 Mini Truck</div>
-      <div class="rprice">₹890 <span style="font-size:12px;color:var(--gy);font-weight:400">(₹120+35×₹22)</span></div>
-      <div class="rrow" style="font-size:11px;color:var(--gy)">Tumhara hissa: ₹801 &nbsp;|&nbsp; Tempodo: ₹89</div>
-      <div class="rrow">👤 Rahul Sharma</div>
+
+    <!-- INCOMING REQUEST -->
+    <div id="req-card" style="display:none" class="req-card">
+      <div class="rh"><span style="font-size:20px">🔔</span><h3>Naya Booking!</h3></div>
+      <div class="rrow">📍 <strong id="req-pickup">--</strong></div>
+      <div class="rrow">🏁 <strong id="req-drop">--</strong></div>
+      <div class="rrow">📏 <strong id="req-km">--</strong> km</div>
+      <div class="rrow">🚛 <strong id="req-veh">--</strong></div>
+      <div class="rprice" id="req-price">--</div>
+      <div class="rrow" style="font-size:11px;color:var(--gy)" id="req-split">--</div>
+      <div class="rrow">👤 <strong id="req-cust">--</strong></div>
       <div class="racts">
-        <button class="btn btn-gr" onclick="acceptTrip()" style="margin:0">✓ Accept</button>
-        <button class="btn btn-re" onclick="rejectTrip()" style="margin:0">✗ Decline</button>
+        <button class="btn btn-gr" style="margin:0" onclick="acceptTrip()">✓ Accept</button>
+        <button class="btn btn-re" style="margin:0" onclick="rejectTrip()">✗ Decline</button>
       </div>
     </div>
+
+    <!-- LOCATION SHARE -->
     <div class="card">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">📡 Live Location Share</div>
-      <div id="loc-st" style="font-size:13px;color:var(--gy);margin-bottom:10px">Location share OFF hai</div>
-      <button class="btn btn-or" id="loc-btn" onclick="startLoc()" style="margin-bottom:8px">🛰️ Location Share Shuru Karo</button>
-      <div id="drv-mini-map" style="height:180px;border-radius:10px;overflow:hidden;display:none;margin-top:8px"></div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📡 Live Location</div>
+      <div id="loc-status" style="font-size:12px;color:var(--gy);margin-bottom:8px">Location share OFF</div>
+      <div id="drv-mini-map" style="height:160px;border-radius:8px;overflow:hidden;display:none;margin-bottom:8px"></div>
+      <button class="btn btn-or" id="loc-btn" onclick="toggleLocation()" style="margin-bottom:0">🛰️ Location Share Shuru Karo</button>
     </div>
+
+    <!-- TODAY STATS -->
     <div class="card">
       <div style="font-size:13px;font-weight:700;margin-bottom:10px">📊 Aaj Ka Hisaab</div>
-      <div class="prow"><span class="pk">Total Trips</span><span class="pv">3</span></div>
-      <div class="prow"><span class="pk">Total KM</span><span class="pv">87 km</span></div>
-      <div class="prow"><span class="pk">Gross</span><span class="pv">₹1,364</span></div>
-      <div class="prow"><span class="pk">Tempodo 10%</span><span class="pv" style="color:var(--re)">−₹136</span></div>
-      <div class="ptotal" style="border-top:1px solid var(--bd);margin-top:8px;padding-top:8px"><span class="pl">Net Kamaai</span><span class="pa" style="font-size:20px">₹1,228</span></div>
+      <div class="prow"><span class="pk">Total KM</span><span class="pv" id="drv-km-today">0</span></div>
+      <div class="prow"><span class="pk">Gross Earning</span><span class="pv" id="drv-gross-today">₹0</span></div>
+      <div class="prow"><span class="pk">Commission (10%)</span><span class="pv" style="color:var(--re)" id="drv-comm-today">−₹0</span></div>
+      <div class="ptotal" style="border-top:1px solid var(--bd);margin-top:8px;padding-top:8px">
+        <span class="pl">Net Kamaai</span><span class="pa" style="font-size:20px" id="drv-net-today">₹0</span>
+      </div>
     </div>
-    <div class="card">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">📄 Documents</div>
-      <div class="doc-item upl"><div class="doc-ic">📋</div><div class="doc-inf"><div class="doc-nm">Driving License</div><div class="doc-st">Verified ✓</div></div><span class="dbadge done">✓</span></div>
-      <div class="doc-item" style="border-color:#FFB74D;background:#FFFDE7"><div class="doc-ic">🚗</div><div class="doc-inf"><div class="doc-nm">Vehicle RC</div><div class="doc-st">Admin review mein</div></div><span class="dbadge pend">⏳</span></div>
-      <div class="doc-item upl"><div class="doc-ic">🪪</div><div class="doc-inf"><div class="doc-nm">Aadhar Card</div><div class="doc-st">Verified ✓</div></div><span class="dbadge done">✓</span></div>
+
+    <!-- MY BOOKINGS -->
+    <div class="stitle">Meri Recent Trips</div>
+    <div id="drv-trips-list">
+      <div class="loading"><div class="spinner"></div></div>
     </div>
     <br>
   </div>
@@ -333,12 +443,12 @@ input[type=range]{width:100%;accent-color:var(--or)}
 
 <!-- ADMIN LOGIN -->
 <div class="screen" id="admin-login">
-  <div class="hdr"><div class="hdr-logo">T</div><h1>Admin Access</h1><button class="hdr-back" onclick="goTo('home')">← Wapas</button></div>
+  <div class="hdr"><div class="hdr-logo">T</div><h1>Admin Login</h1><button class="hdr-back" onclick="goTo('home')">← Wapas</button></div>
   <div class="content">
-    <div style="font-size:58px;text-align:center;margin-bottom:18px">🔐</div>
-    <h2 style="text-align:center;font-size:19px;margin-bottom:6px">Admin Panel</h2>
-    <p style="text-align:center;color:var(--gy);font-size:13px;margin-bottom:22px">Sirf Tempodo Admin ke liye</p>
-    <div class="ig"><label>Email</label><input type="email" id="adm-email" placeholder="admin@tempodo.com"></div>
+    <div style="font-size:56px;text-align:center;margin-bottom:16px">🔐</div>
+    <h2 style="text-align:center;font-size:18px;margin-bottom:6px;color:#333">Admin Panel</h2>
+    <p style="text-align:center;color:var(--gy);font-size:12px;margin-bottom:24px">Sirf authorized admin ke liye</p>
+    <div class="ig"><label>Email</label><input type="email" id="adm-email" placeholder="admin email daalo"></div>
     <div class="ig"><label>Password</label><input type="password" id="adm-pass" placeholder="••••••••"></div>
     <button class="btn btn-navy" onclick="adminLogin()">Login →</button>
   </div>
@@ -346,210 +456,501 @@ input[type=range]{width:100%;accent-color:var(--or)}
 
 <!-- ADMIN DASHBOARD -->
 <div class="screen" id="admin">
-  <div class="ahdr"><h2>🛡️ Admin Panel — Tempodo</h2><p>Jhunjhunu District Transport Network</p></div>
+  <div class="ahdr">
+    <h2>🛡️ Admin Panel — Tempodo</h2>
+    <p>Jhunjhunu District Transport</p>
+  </div>
   <div class="sg">
-    <div class="sc"><div class="sv">14</div><div class="sl">Drivers</div></div>
-    <div class="sc"><div class="sv">63</div><div class="sl">Bookings</div></div>
-    <div class="sc"><div class="sv">₹24k</div><div class="sl">Revenue</div></div>
+    <div class="sc"><div class="sv" id="adm-drv-count">0</div><div class="sl">Drivers</div></div>
+    <div class="sc"><div class="sv" id="adm-bk-count">0</div><div class="sl">Bookings</div></div>
+    <div class="sc"><div class="sv" id="adm-rev">₹0</div><div class="sl">Revenue</div></div>
   </div>
   <div class="tabs">
-    <div class="tab active" onclick="showTab('td')">👥 Drivers</div>
-    <div class="tab" onclick="showTab('tb')">📦 Bookings</div>
+    <div class="tab active" onclick="showTab('ta')">👥 Drivers</div>
+    <div class="tab" onclick="showTab('tb')">📦 Booking</div>
     <div class="tab" onclick="showTab('tr')">💰 Rates</div>
     <div class="tab" onclick="showTab('tl')">📡 Live</div>
+    <div class="tab" onclick="showTab('ts')">⚙️ Settings</div>
   </div>
   <div class="scrollable">
     <!-- DRIVERS TAB -->
-    <div class="tpane active" id="td">
+    <div class="tpane active" id="ta">
       <div class="stitle">Pending Approval</div>
-      <div class="drow2"><div class="dav">MS</div><div class="dinf"><div class="dnm">Mahesh Sharma</div><div class="ddt">Tempo • Chirawa • RJ25GA1234</div></div><button class="abtn ap" onclick="approveDrv(this)">Review →</button></div>
-      <div class="drow2"><div class="dav">VJ</div><div class="dinf"><div class="dnm">Vikas Jangir</div><div class="ddt">Pickup • Bissau • RJ25GC5678</div></div><button class="abtn ap" onclick="approveDrv(this)">Review →</button></div>
-      <div class="drow2"><div class="dav">SP</div><div class="dinf"><div class="dnm">Suresh Pareek</div><div class="ddt">3-Wheeler • Mandawa • RJ25GE9012</div></div><button class="abtn ap" onclick="approveDrv(this)">Review →</button></div>
-      <div class="stitle" style="margin-top:8px">Active Drivers</div>
-      <div class="drow2"><div class="dav" style="background:#4CAF50">RK</div><div class="dinf"><div class="dnm">Ramesh Kumar</div><div class="ddt">Mini Truck • Nawalgarh • ⚡ Online</div></div><button class="abtn aok">✓ Active</button></div>
-      <div class="drow2"><div class="dav" style="background:#4CAF50">AY</div><div class="dinf"><div class="dnm">Ashok Yadav</div><div class="ddt">Tempo • Jhunjhunu • ⚡ Online</div></div><button class="abtn aok">✓ Active</button></div>
-      <div class="drow2"><div class="dav" style="background:#bbb">MK</div><div class="dinf"><div class="dnm">Mukesh Kumawat</div><div class="ddt">Pickup • Pilani • 💤 Offline</div></div><button class="abtn av">Docs Dekho</button></div>
+      <div id="pending-drivers"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="stitle" style="margin-top:8px">All Drivers</div>
+      <div id="all-drivers"><div class="loading"><div class="spinner"></div></div></div>
     </div>
     <!-- BOOKINGS TAB -->
     <div class="tpane" id="tb">
-      <div class="stitle">Recent Bookings</div>
-      <div class="bki"><div class="bkid">#TMP-00063 • Aaj 14:32</div><div class="bkr">Mandawa → Jhunjhunu City</div><div class="bkm"><span>Mini Truck</span><span>35km</span><span>₹890</span><span>Ramesh K.</span><span class="sb sb-ok">✓ Complete</span></div></div>
-      <div class="bki"><div class="bkid">#TMP-00064 • Aaj 15:10</div><div class="bkr">Nawalgarh → Chirawa</div><div class="bkm"><span>Tempo</span><span>28km</span><span>₹500</span><span>Ashok Y.</span><span class="sb sb-live">🔴 Live</span></div></div>
-      <div class="bki"><div class="bkid">#TMP-00062 • Aaj 11:00</div><div class="bkr">Pilani → Jhunjhunu</div><div class="bkm"><span>Pickup</span><span>42km</span><span>₹856</span><span>Mukesh K.</span><span class="sb sb-ok">✓ Complete</span></div></div>
-      <div class="bki"><div class="bkid">#TMP-00061 • Kal 09:20</div><div class="bkr">Bissau → Nawalgarh</div><div class="bkm"><span>3-Wheeler</span><span>18km</span><span>₹266</span><span>Vikas J.</span><span class="sb sb-cancel">✗ Cancel</span></div></div>
+      <div class="stitle">All Bookings</div>
+      <div id="all-bookings"><div class="loading"><div class="spinner"></div></div></div>
     </div>
     <!-- RATES TAB -->
     <div class="tpane" id="tr">
       <div class="stitle">Rates Change Karo</div>
-      <div class="rmgr"><div class="rhdr">🛺 3-Wheeler Tempo</div><div class="rrate"><span class="rl">Base Charge</span><input class="ri3" type="number" value="50"><span class="ru">₹</span></div><div class="rrate"><span class="rl">Per KM Rate</span><input class="ri3" type="number" value="12"><span class="ru">₹/km</span></div><div class="rrate"><span class="rl">Minimum</span><input class="ri3" type="number" value="80"><span class="ru">₹</span></div></div>
-      <div class="rmgr"><div class="rhdr">🚐 Tempo</div><div class="rrate"><span class="rl">Base Charge</span><input class="ri3" type="number" value="80"><span class="ru">₹</span></div><div class="rrate"><span class="rl">Per KM Rate</span><input class="ri3" type="number" value="15"><span class="ru">₹/km</span></div><div class="rrate"><span class="rl">Minimum</span><input class="ri3" type="number" value="120"><span class="ru">₹</span></div></div>
-      <div class="rmgr"><div class="rhdr">🛻 Pickup</div><div class="rrate"><span class="rl">Base Charge</span><input class="ri3" type="number" value="100"><span class="ru">₹</span></div><div class="rrate"><span class="rl">Per KM Rate</span><input class="ri3" type="number" value="18"><span class="ru">₹/km</span></div><div class="rrate"><span class="rl">Minimum</span><input class="ri3" type="number" value="150"><span class="ru">₹</span></div></div>
-      <div class="rmgr"><div class="rhdr">🚛 Mini Truck</div><div class="rrate"><span class="rl">Base Charge</span><input class="ri3" type="number" value="120"><span class="ru">₹</span></div><div class="rrate"><span class="rl">Per KM Rate</span><input class="ri3" type="number" value="22"><span class="ru">₹/km</span></div><div class="rrate"><span class="rl">Minimum</span><input class="ri3" type="number" value="200"><span class="ru">₹</span></div></div>
-      <div class="rmgr"><div class="rhdr">⚙️ Commission & Extra</div><div class="rrate"><span class="rl">Tempodo Commission</span><input class="ri3" type="number" value="10"><span class="ru">%</span></div><div class="rrate"><span class="rl">Night Charge (10pm+)</span><input class="ri3" type="number" value="20"><span class="ru">%</span></div><div class="rrate"><span class="rl">Loading/Unloading</span><input class="ri3" type="number" value="50"><span class="ru">₹</span></div></div>
-      <div style="padding:14px"><button class="btn btn-navy" onclick="toast('✓ Rates save ho gaye!')">💾 Rates Save Karo</button></div>
+      <div class="rmgr">
+        <div class="rhdr">🛺 3-Wheeler Tempo</div>
+        <div class="rrate"><span class="rl">Base Charge</span><input class="ri" type="number" id="r-3w-base" value="50"><span class="ru">₹</span></div>
+        <div class="rrate"><span class="rl">Per KM</span><input class="ri" type="number" id="r-3w-km" value="12"><span class="ru">₹/km</span></div>
+        <div class="rrate"><span class="rl">Minimum</span><input class="ri" type="number" id="r-3w-min" value="80"><span class="ru">₹</span></div>
+      </div>
+      <div class="rmgr">
+        <div class="rhdr">🚐 Tempo</div>
+        <div class="rrate"><span class="rl">Base Charge</span><input class="ri" type="number" id="r-tp-base" value="80"><span class="ru">₹</span></div>
+        <div class="rrate"><span class="rl">Per KM</span><input class="ri" type="number" id="r-tp-km" value="15"><span class="ru">₹/km</span></div>
+        <div class="rrate"><span class="rl">Minimum</span><input class="ri" type="number" id="r-tp-min" value="120"><span class="ru">₹</span></div>
+      </div>
+      <div class="rmgr">
+        <div class="rhdr">🛻 Pickup</div>
+        <div class="rrate"><span class="rl">Base Charge</span><input class="ri" type="number" id="r-pk-base" value="100"><span class="ru">₹</span></div>
+        <div class="rrate"><span class="rl">Per KM</span><input class="ri" type="number" id="r-pk-km" value="18"><span class="ru">₹/km</span></div>
+        <div class="rrate"><span class="rl">Minimum</span><input class="ri" type="number" id="r-pk-min" value="150"><span class="ru">₹</span></div>
+      </div>
+      <div class="rmgr">
+        <div class="rhdr">🚛 Mini Truck</div>
+        <div class="rrate"><span class="rl">Base Charge</span><input class="ri" type="number" id="r-mt-base" value="120"><span class="ru">₹</span></div>
+        <div class="rrate"><span class="rl">Per KM</span><input class="ri" type="number" id="r-mt-km" value="22"><span class="ru">₹/km</span></div>
+        <div class="rrate"><span class="rl">Minimum</span><input class="ri" type="number" id="r-mt-min" value="200"><span class="ru">₹</span></div>
+      </div>
+      <div class="rmgr">
+        <div class="rhdr">⚙️ Commission</div>
+        <div class="rrate"><span class="rl">Tempodo Commission</span><input class="ri" type="number" id="r-comm" value="10"><span class="ru">%</span></div>
+        <div class="rrate"><span class="rl">Night Charge (10pm+)</span><input class="ri" type="number" id="r-night" value="20"><span class="ru">%</span></div>
+        <div class="rrate"><span class="rl">Loading/Unloading</span><input class="ri" type="number" id="r-load" value="50"><span class="ru">₹</span></div>
+      </div>
+      <div style="padding:14px">
+        <button class="btn btn-navy" onclick="saveRates()">💾 Rates Save Karo</button>
+      </div>
     </div>
     <!-- LIVE TAB -->
     <div class="tpane" id="tl">
-      <div class="stitle">Live Driver Locations</div>
-      <div id="admin-map" style="height:280px;margin:0 14px 14px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)"></div>
-      <div class="drow2"><div class="dav" style="background:#4CAF50">RK</div><div class="dinf"><div class="dnm">Ramesh Kumar — Mini Truck</div><div class="ddt"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4CAF50;margin-right:4px;animation:pulse 1.4s infinite"></span>Live • Nawalgarh Road • Trip #64</div></div></div>
-      <div class="drow2"><div class="dav" style="background:#4CAF50">AY</div><div class="dinf"><div class="dnm">Ashok Yadav — Tempo</div><div class="ddt"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4CAF50;margin-right:4px;animation:pulse 1.4s infinite"></span>Live • Available</div></div></div>
-      <div class="drow2"><div class="dav" style="background:#bbb">MK</div><div class="dinf"><div class="dnm">Mukesh Kumawat — Pickup</div><div class="ddt">💤 Offline</div></div></div>
+      <div class="stitle">Live Driver Map</div>
+      <div id="admin-map-wrap" style="margin:0 14px 14px">
+        <div id="admin-map" style="height:280px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)"></div>
+      </div>
+      <div class="stitle">Online Drivers</div>
+      <div id="live-drivers-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <!-- SETTINGS TAB -->
+    <div class="tpane" id="ts">
+      <div class="stitle">Admin Password Change Karo</div>
+      <div class="card">
+        <div class="ig"><label>Naya Password</label><input type="password" id="new-pass" placeholder="Naya password"></div>
+        <div class="ig"><label>Confirm Password</label><input type="password" id="confirm-pass" placeholder="Dobara likho"></div>
+        <button class="btn btn-navy" onclick="changeAdminPass()">🔒 Password Update Karo</button>
+      </div>
+      <div class="stitle" style="margin-top:8px">Admin Info</div>
+      <div class="card">
+        <div class="prow"><span class="pk">Email</span><span class="pv" id="adm-email-show">--</span></div>
+        <div class="prow" style="margin-top:8px;margin-bottom:0"><span class="pk">App Version</span><span class="pv">v1.0</span></div>
+      </div>
+      <div style="padding:14px">
+        <button class="btn btn-out" onclick="adminLogout()">← Logout</button>
+      </div>
     </div>
   </div>
-  <div style="padding:14px"><button class="btn btn-out" onclick="goTo('home')">← Logout</button></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
+// ============ STATE ============
 var sv={name:'Mini Truck',base:120,rate:22,min:200,icon:'🚛'};
-var km=20,drOnline=true,locWid=null,cMap=null,aMap=null,dMap=null;
+var km=20;
+var locCoords={pickup:null,drop:null};
+var driverOnline=false;
+var locWatchId=null;
+var custMap=null,trackMap=null,adminMap=null,drvMiniMap=null;
+var drvMarker=null,custMarker=null;
+var currentDriver=null;
+var currentBookingId=null;
+var bookingListener=null;
+var driverListener=null;
+var rates={};
+var adminMapMarkers=[];
+var searchTimeout=null;
 var jjn=[28.1339,75.3985];
 
+// ============ NAVIGATION ============
 function goTo(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
-  if(id==='booking-confirm')setTimeout(initCMap,400);
-  if(id==='admin')setTimeout(function(){if(document.getElementById('tl').classList.contains('active'))initAMap();},400);
+  if(id==='customer'){setTimeout(initCustMap,400);}
+  if(id==='admin'){loadAdminData();}
+  if(id==='driver-dash'){loadDriverDash();}
 }
 
+// ============ LOCATION SEARCH (OpenStreetMap Nominatim) ============
+async function searchLoc(inp,resId,field){
+  var q=inp.value.trim();
+  var res=document.getElementById(resId);
+  if(q.length<2){res.style.display='none';return;}
+  clearTimeout(searchTimeout);
+  searchTimeout=setTimeout(async function(){
+    try{
+      var url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q+' Jhunjhunu Rajasthan India')+'&limit=5&addressdetails=1';
+      var r=await fetch(url,{headers:{'Accept-Language':'hi,en'}});
+      var data=await r.json();
+      if(!data.length){
+        // Also try without Jhunjhunu
+        url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q+' Rajasthan India')+'&limit=5';
+        r=await fetch(url,{headers:{'Accept-Language':'hi,en'}});
+        data=await r.json();
+      }
+      res.innerHTML='';
+      if(data.length){
+        data.forEach(function(place){
+          var name=place.display_name.split(',').slice(0,3).join(', ');
+          var div=document.createElement('div');
+          div.className='loc-item';
+          div.textContent='📍 '+name;
+          div.onclick=function(){
+            inp.value=name;
+            locCoords[field]={lat:parseFloat(place.lat),lng:parseFloat(place.lon),name:name};
+            document.getElementById(field+'-val').style.display='block';
+            res.style.display='none';
+            if(custMap){
+              if(field==='pickup'){
+                if(custMarker)custMap.removeLayer(custMarker);
+                var ci=L.divIcon({html:'<div style="background:#C62828;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconAnchor:[7,7],className:''});
+                custMarker=L.marker([locCoords.pickup.lat,locCoords.pickup.lng],{icon:ci}).addTo(custMap).bindPopup('📍 Pickup');
+                custMap.setView([locCoords.pickup.lat,locCoords.pickup.lng],13);
+              }
+            }
+            updateNearbyDrivers();
+          };
+          res.appendChild(div);
+        });
+        res.style.display='block';
+      }else{res.style.display='none';}
+    }catch(e){res.style.display='none';}
+  },500);
+}
+
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.loc-wrap')){
+    document.querySelectorAll('.loc-results').forEach(r=>r.style.display='none');
+  }
+});
+
+// ============ CUSTOMER MAP ============
+function initCustMap(){
+  if(custMap){custMap.invalidateSize();loadOnlineDriversOnMap();return;}
+  try{
+    custMap=L.map('cust-map',{zoomControl:true,attributionControl:false}).setView(jjn,12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(custMap);
+    loadOnlineDriversOnMap();
+  }catch(e){console.log('Map err',e);}
+}
+
+async function loadOnlineDriversOnMap(){
+  if(!window.dbReady||!custMap)return;
+  try{
+    var snap=await window.FS.getDocs(window.FS.query(
+      window.FS.collection(window.db,'drivers'),
+      window.FS.where('status','==','online')
+    ));
+    var count=0;
+    snap.forEach(function(d){
+      var data=d.data();
+      if(data.lat&&data.lng){
+        count++;
+        var icon=L.divIcon({html:'<div style="background:#E65100;color:#fff;width:32px;height:32px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:14px">🚛</div>',iconAnchor:[16,16],className:''});
+        L.marker([data.lat,data.lng],{icon:icon}).addTo(custMap).bindPopup('🚛 '+data.name+' ('+data.vehicle+')');
+      }
+    });
+    document.getElementById('nearby-count').textContent=count>0?'✅ '+count+' driver abhi online hain aapke aas paas!':'⚠️ Abhi koi driver online nahi hai — thodi der baad try karo';
+  }catch(e){}
+}
+
+function updateNearbyDrivers(){loadOnlineDriversOnMap();}
+
+// ============ VEHICLE & PRICE ============
 function selV(el,name,base,rate,min,icon){
   document.querySelectorAll('.vopt').forEach(v=>v.classList.remove('sel'));
-  el.classList.add('sel'); sv={name,base,rate,min,icon}; calcPrice();
+  el.classList.add('sel');
+  sv={name,base,rate,min,icon};
+  calcPrice();
 }
 
 function calcPrice(){
   km=parseInt(document.getElementById('km-sl').value);
   document.getElementById('km-val').textContent=km+' KM';
-  var c=Math.max(sv.base+km*sv.rate,sv.min);
+  var r=rates[sv.name]||{base:sv.base,rate:sv.rate,min:sv.min};
+  var c=Math.max(r.base+km*r.rate,r.min);
   document.getElementById('vname-d').textContent=sv.icon+' '+sv.name;
-  document.getElementById('base-d').textContent='₹'+sv.base;
-  document.getElementById('kmr-d').textContent=km+' km × ₹'+sv.rate;
-  document.getElementById('kmc-d').textContent='₹'+(km*sv.rate);
+  document.getElementById('base-d').textContent='₹'+r.base;
+  document.getElementById('kmr-d').textContent=km+' km × ₹'+r.rate;
+  document.getElementById('kmc-d').textContent='₹'+(km*r.rate);
   document.getElementById('tot-d').textContent='₹'+c;
+  return c;
 }
 
-function bookNow(){
-  var p=document.getElementById('pickup').value;
-  var d=document.getElementById('drop').value;
+// ============ BOOK NOW ============
+async function bookNow(){
+  var p=document.getElementById('pickup-inp').value;
+  var d=document.getElementById('drop-inp').value;
   var ph=document.getElementById('cust-phone').value;
-  if(!p||!d){toast('Pickup aur Drop daalo!');return}
-  if(!ph){toast('Phone number daalo!');return}
-  var c=Math.max(sv.base+km*sv.rate,sv.min);
-  var bid='#TMP-00'+Math.floor(Math.random()*900+100);
-  document.getElementById('mt-p').textContent=p;
-  document.getElementById('mt-d').textContent=d;
-  document.getElementById('b-id').textContent=bid;
-  document.getElementById('b-veh').textContent=sv.icon+' '+sv.name;
-  document.getElementById('b-price').textContent='₹'+c;
-  document.getElementById('pr-v').textContent='₹'+c;
-  goTo('booking-confirm');
-  setTimeout(function(){
-    document.getElementById('drv-ln').textContent='Ramesh Kumar aa raha hai!';
-    document.getElementById('drv-lv').innerHTML=sv.icon+' '+sv.name+' &nbsp;<span style="color:#4CAF50;font-weight:600">🟢 Live Tracking ON</span>';
-    document.getElementById('ls').textContent='🟢 Live';
-    document.getElementById('b-st').textContent='Driver On Way ✓';
-    document.getElementById('b-st').style.color='#2E7D32';
-    document.getElementById('eta-v').textContent='8';
-    document.getElementById('dist-v').textContent='4.2';
-    simDrv();
-  },3500);
-}
+  var nm=document.getElementById('cust-name').value;
+  if(!p||!d){toast('Pickup aur Drop location daalo!');return;}
+  if(!ph||ph.length<10){toast('Phone number sahi daalo!');return;}
+  if(!nm){toast('Apna naam daalo!');return;}
 
-function initCMap(){
-  if(cMap){cMap.invalidateSize();return}
+  var btn=document.getElementById('book-btn');
+  btn.textContent='Booking ho rahi hai...';
+  btn.disabled=true;
+
+  var c=calcPrice();
+  var comm=Math.round(c*0.1);
+  var bid='TMP'+Date.now().toString().slice(-6);
+
   try{
-    cMap=L.map('the-map',{zoomControl:true,attributionControl:false}).setView(jjn,13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(cMap);
-    var ci=L.divIcon({html:'<div style="background:#C62828;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconAnchor:[7,7]});
-    L.marker(jjn,{icon:ci}).addTo(cMap).bindPopup('📍 Aap yahan hain');
-    var di=L.divIcon({html:'<div style="background:#E65100;color:#fff;width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:17px">🚛</div>',iconAnchor:[18,18]});
-    window._drvMark=L.marker([28.1480,75.4100],{icon:di}).addTo(cMap).bindPopup('🚛 Driver aa raha hai!');
-  }catch(e){}
-}
+    var bookingData={
+      id:bid,
+      customer:{name:nm,phone:ph},
+      pickup:{text:p,lat:locCoords.pickup?locCoords.pickup.lat:null,lng:locCoords.pickup?locCoords.pickup.lng:null},
+      drop:{text:d,lat:locCoords.drop?locCoords.drop.lat:null,lng:locCoords.drop?locCoords.drop.lng:null},
+      vehicle:sv.name,
+      vehicleIcon:sv.icon,
+      km:km,
+      amount:c,
+      commission:comm,
+      driverAmount:c-comm,
+      status:'searching',
+      createdAt:window.FS.serverTimestamp(),
+      note:document.getElementById('cust-note').value||''
+    };
 
-function simDrv(){
-  if(!window._drvMark)return;
-  var sLat=28.1480,sLng=75.4100,eLat=jjn[0],eLng=jjn[1],steps=30,s=0;
-  var iv=setInterval(function(){
-    if(s>=steps){clearInterval(iv);return}
-    s++;
-    var lat=sLat+(eLat-sLat)*(s/steps);
-    var lng=sLng+(eLng-sLng)*(s/steps);
-    window._drvMark.setLatLng([lat,lng]);
-    var rem=Math.max(0,(30-s)*0.15).toFixed(1);
-    var eta=Math.max(1,30-s);
-    if(document.getElementById('dist-v'))document.getElementById('dist-v').textContent=rem;
-    if(document.getElementById('eta-v'))document.getElementById('eta-v').textContent=eta;
-    if(cMap)cMap.panTo([lat,lng]);
-  },1200);
-}
+    var ref=await window.FS.addDoc(window.FS.collection(window.db,'bookings'),bookingData);
+    currentBookingId=ref.id;
 
-function initAMap(){
-  var el=document.getElementById('admin-map');
-  if(!el||el._leaflet_id)return;
-  try{
-    aMap=L.map('admin-map',{attributionControl:false}).setView([28.18,75.45],11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(aMap);
-    var mk=function(c,t){return L.divIcon({html:'<div style="background:'+c+';color:#fff;width:32px;height:32px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">'+t+'</div>',iconAnchor:[16,16]})};
-    L.marker([28.1480,75.4100],{icon:mk('#4CAF50','RK')}).addTo(aMap).bindPopup('🚛 Ramesh Kumar — Trip Live');
-    L.marker([28.0850,75.5200],{icon:mk('#4CAF50','AY')}).addTo(aMap).bindPopup('🚐 Ashok Yadav — Available');
-    L.marker([28.3700,75.6000],{icon:mk('#bbb','MK')}).addTo(aMap).bindPopup('🛻 Mukesh — Offline');
-    L.marker(jjn,{icon:mk('#E65100','JJN')}).addTo(aMap).bindPopup('📍 Jhunjhunu City');
-  }catch(e){}
-}
+    // Setup tracking
+    document.getElementById('trk-bid').textContent='#'+bid;
+    document.getElementById('trk-pickup').textContent=p;
+    document.getElementById('trk-drop').textContent=d;
+    document.getElementById('trk-veh').textContent=sv.icon+' '+sv.name;
+    document.getElementById('trk-price').textContent='₹'+c;
+    document.getElementById('trk-status').textContent='Driver dhundh raha hai...';
 
-function startLoc(){
-  document.getElementById('loc-st').innerHTML='<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4CAF50;margin-right:6px;animation:pulse 1.4s infinite"></span><b style="color:#2E7D32">Live Location Share Ho Raha Hai!</b>';
-  document.getElementById('loc-btn').textContent='🔴 Location Band Karo';
-  document.getElementById('loc-btn').onclick=stopLoc;
-  document.getElementById('drv-mini-map').style.display='block';
-  if(!dMap){
-    setTimeout(function(){
-      try{
-        dMap=L.map('drv-mini-map',{zoomControl:false,attributionControl:false}).setView(jjn,14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(dMap);
-        var mi=L.divIcon({html:'<div style="background:#E65100;color:#fff;width:32px;height:32px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:15px">🚛</div>',iconAnchor:[16,16]});
-        var mm=L.marker(jjn,{icon:mi}).addTo(dMap);
-        if(navigator.geolocation){
-          locWid=navigator.geolocation.watchPosition(function(p){
-            var ll=[p.coords.latitude,p.coords.longitude];
-            mm.setLatLng(ll);dMap.panTo(ll);
-          },function(){},{ enableHighAccuracy:true,timeout:10000 });
-        }
-      }catch(e){}
-    },300);
+    goTo('tracking');
+    initTrackMap();
+    listenBooking(ref.id);
+
+    btn.textContent='🚛 Booking Karo';
+    btn.disabled=false;
+    toast('Booking ho gayi! #'+bid);
+  }catch(e){
+    toast('Error: '+e.message);
+    btn.textContent='🚛 Booking Karo';
+    btn.disabled=false;
   }
-  toast('Location share shuru! Customer aapko dekh sakta hai.');
 }
 
-function stopLoc(){
-  if(locWid)navigator.geolocation.clearWatch(locWid);
-  document.getElementById('loc-st').textContent='Location share band.';
-  document.getElementById('loc-btn').textContent='🛰️ Location Share Shuru Karo';
-  document.getElementById('loc-btn').onclick=startLoc;
-  document.getElementById('drv-mini-map').style.display='none';
-  toast('Location share band ho gaya.');
+// ============ TRACKING MAP ============
+function initTrackMap(){
+  if(trackMap){trackMap.remove();trackMap=null;}
+  setTimeout(function(){
+    try{
+      trackMap=L.map('track-map',{zoomControl:true,attributionControl:false}).setView(jjn,13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(trackMap);
+      if(locCoords.pickup&&locCoords.pickup.lat){
+        var pi=L.divIcon({html:'<div style="background:#C62828;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)"></div>',iconAnchor:[7,7],className:''});
+        L.marker([locCoords.pickup.lat,locCoords.pickup.lng],{icon:pi}).addTo(trackMap).bindPopup('📍 Pickup');
+        trackMap.setView([locCoords.pickup.lat,locCoords.pickup.lng],13);
+      }
+    }catch(e){}
+  },400);
 }
 
-function toggleOnline(){
-  drOnline=!drOnline;
-  document.getElementById('sdot').className='sdot'+(drOnline?'':' off');
-  document.getElementById('stxt').textContent=drOnline?'Online — Ready hai':'Offline — Trip nahi loge';
-  document.getElementById('stog').textContent=drOnline?'Offline Jao':'Online Jao';
-  document.getElementById('stog').style.background=drOnline?'#FFEBEE':'#E8F5E9';
-  document.getElementById('stog').style.color=drOnline?'var(--re)':'var(--gr)';
-  toast(drOnline?'Aap Online ho gaye!':'Aap Offline ho gaye!');
+function listenBooking(bookingId){
+  if(bookingListener)bookingListener();
+  bookingListener=window.FS.onSnapshot(window.FS.doc(window.db,'bookings',bookingId),function(snap){
+    if(!snap.exists())return;
+    var data=snap.data();
+    document.getElementById('trk-status').textContent=statusText(data.status);
+    if(data.driver){
+      document.getElementById('trk-drv-name').textContent=data.driver.name+' aa raha hai!';
+      document.getElementById('trk-drv-veh').textContent=data.vehicleIcon+' '+data.vehicle+' • 🟢 Live';
+      document.getElementById('trk-av').textContent=data.driver.name.charAt(0);
+      document.getElementById('trk-call-btn').style.display='inline-block';
+      document.getElementById('trk-eta').textContent='~10';
+      document.getElementById('trk-dist').textContent='--';
+      // Show driver on map
+      if(data.driver.lat&&trackMap){
+        var di=L.divIcon({html:'<div style="background:#E65100;color:#fff;width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:17px">🚛</div>',iconAnchor:[18,18],className:''});
+        if(drvMarker)trackMap.removeLayer(drvMarker);
+        drvMarker=L.marker([data.driver.lat,data.driver.lng],{icon:di}).addTo(trackMap);
+        trackMap.setView([data.driver.lat,data.driver.lng],13);
+      }
+    }
+  });
 }
 
-function acceptTrip(){
-  var rc=document.getElementById('req-card');
-  rc.style.background='#E8F5E9';rc.style.borderColor='#4CAF50';
-  rc.querySelector('.rh h3').textContent='Trip Accepted! ✓';
-  rc.querySelector('.racts').innerHTML='<button class="btn btn-gr" style="margin:0" onclick="startLoc()">🛰️ Location Share Karo & Chalo</button>';
-  toast('Trip accept! Customer ko notification gaya.');
+function statusText(s){
+  var map={'searching':'Driver dhundh raha hai...','accepted':'Driver aa raha hai ✓','arrived':'Driver pahunch gaya!','completed':'Trip complete ✓','cancelled':'Cancel ho gayi'};
+  return map[s]||s;
+}
+
+function callDriver(){toast('Driver ka number admin se lo.');}
+
+// ============ DRIVER REGISTRATION ============
+var uploadedDocs={};
+function markDoc(key,name,eid,bid){
+  uploadedDocs[key]=true;
+  document.getElementById(eid).classList.add('upl');
+  var b=document.getElementById(bid);b.textContent='✓ Done';b.className='dbadge b-done';
+  toast(name+' confirm ho gaya!');
+}
+
+async function submitReg(){
+  var n=document.getElementById('drv-name').value;
+  var ph=document.getElementById('drv-phone').value;
+  var vn=document.getElementById('drv-vnum').value;
+  if(!n||!ph){toast('Naam aur phone zaroori!');return;}
+  if(!vn){toast('Vehicle number daalo!');return;}
+  if(ph.length<10){toast('Phone number sahi daalo!');return;}
+
+  try{
+    var existing=await window.FS.getDocs(window.FS.query(
+      window.FS.collection(window.db,'drivers'),
+      window.FS.where('phone','==',ph)
+    ));
+    if(!existing.empty){toast('Ye number pehle se registered hai! Login karo.');return;}
+
+    await window.FS.addDoc(window.FS.collection(window.db,'drivers'),{
+      name:n,
+      phone:ph,
+      vehicle:document.getElementById('drv-veh').value,
+      vehicleNo:vn.toUpperCase(),
+      city:document.getElementById('drv-city').value,
+      status:'offline',
+      approvalStatus:'pending',
+      docs:uploadedDocs,
+      earnings:{today:0,total:0,trips:0},
+      lat:null,lng:null,
+      createdAt:window.FS.serverTimestamp()
+    });
+    toast('Registration submit ho gaya! Admin 24 ghante mein verify karega.');
+    setTimeout(function(){goTo('home');},2000);
+  }catch(e){toast('Error: '+e.message);}
+}
+
+// ============ DRIVER LOGIN ============
+async function driverLogin(){
+  var ph=document.getElementById('login-phone').value;
+  if(!ph||ph.length<10){toast('Phone number sahi daalo!');return;}
+  try{
+    var snap=await window.FS.getDocs(window.FS.query(
+      window.FS.collection(window.db,'drivers'),
+      window.FS.where('phone','==',ph)
+    ));
+    if(snap.empty){toast('Ye number registered nahi hai!');return;}
+    var drvDoc=snap.docs[0];
+    var data=drvDoc.data();
+    if(data.approvalStatus==='pending'){toast('Aapka account abhi admin se pending hai!');return;}
+    if(data.approvalStatus==='rejected'){toast('Aapka account reject ho gaya hai. Admin se contact karo.');return;}
+    currentDriver={id:drvDoc.id,...data};
+    localStorage.setItem('tempodo_driver',JSON.stringify({id:drvDoc.id,phone:ph}));
+    goTo('driver-dash');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+function drvLogout(){
+  currentDriver=null;
+  localStorage.removeItem('tempodo_driver');
+  if(locWatchId)navigator.geolocation.clearWatch(locWatchId);
+  goTo('home');
+}
+
+// ============ DRIVER DASHBOARD ============
+async function loadDriverDash(){
+  if(!currentDriver)return;
+  document.getElementById('drv-name-show').textContent=currentDriver.name+' • '+currentDriver.vehicle;
+  // Update online status UI
+  updateOnlineUI(currentDriver.status==='online');
+  // Load earnings
+  loadDriverTrips();
+  // Listen for incoming bookings
+  listenForBookings();
+}
+
+async function loadDriverTrips(){
+  try{
+    var snap=await window.FS.getDocs(window.FS.query(
+      window.FS.collection(window.db,'bookings'),
+      window.FS.where('driverId','==',currentDriver.id),
+      window.FS.orderBy('createdAt','desc')
+    ));
+    var todayTotal=0,todayTrips=0,totalKm=0;
+    var today=new Date().toDateString();
+    var html='';
+    snap.forEach(function(d){
+      var b=d.data();
+      var date=b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().toDateString():'';
+      if(date===today&&b.status==='completed'){
+        todayTotal+=(b.driverAmount||0);todayTrips++;totalKm+=(b.km||0);
+      }
+      html+='<div class="bki"><div class="bkid">#'+b.id+' • '+(b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().toLocaleDateString('hi'):'')+
+        '</div><div class="bkr">'+b.pickup.text+' → '+b.drop.text+'</div>'+
+        '<div class="bkm"><span>'+b.vehicleIcon+' '+b.vehicle+'</span><span>'+b.km+'km</span><span>₹'+b.amount+'</span>'+
+        '<span class="sb '+(b.status==='completed'?'sb-ok':b.status==='cancelled'?'sb-cancel':'sb-live')+'">'+statusText(b.status)+'</span></div></div>';
+    });
+    document.getElementById('drv-earn-today').textContent='₹'+todayTotal;
+    document.getElementById('drv-trips-today').textContent=todayTrips;
+    document.getElementById('drv-km-today').textContent=totalKm;
+    document.getElementById('drv-gross-today').textContent='₹'+Math.round(todayTotal/0.9);
+    document.getElementById('drv-comm-today').textContent='−₹'+Math.round(todayTotal/0.9*0.1);
+    document.getElementById('drv-net-today').textContent='₹'+todayTotal;
+    document.getElementById('drv-trips-list').innerHTML=html||'<div class="empty"><div class="empty-icon">🚛</div><p>Abhi koi trip nahi</p></div>';
+  }catch(e){
+    document.getElementById('drv-trips-list').innerHTML='<div class="empty"><p>Data load nahi ho saka</p></div>';
+  }
+}
+
+function listenForBookings(){
+  if(driverListener)driverListener();
+  if(!currentDriver)return;
+  driverListener=window.FS.onSnapshot(
+    window.FS.query(window.FS.collection(window.db,'bookings'),window.FS.where('status','==','searching')),
+    function(snap){
+      if(!driverOnline)return;
+      snap.docChanges().forEach(function(change){
+        if(change.type==='added'){
+          var b=change.doc.data();
+          if(b.vehicle===currentDriver.vehicle){
+            showBookingRequest(change.doc.id,b);
+          }
+        }
+      });
+    }
+  );
+}
+
+function showBookingRequest(docId,b){
+  document.getElementById('req-pickup').textContent=b.pickup.text;
+  document.getElementById('req-drop').textContent=b.drop.text;
+  document.getElementById('req-km').textContent=b.km;
+  document.getElementById('req-veh').textContent=b.vehicleIcon+' '+b.vehicle;
+  document.getElementById('req-price').textContent='₹'+b.amount;
+  document.getElementById('req-split').textContent='Tumhara: ₹'+b.driverAmount+' | Tempodo: ₹'+b.commission;
+  document.getElementById('req-cust').textContent=b.customer.name;
+  document.getElementById('req-card').style.display='block';
+  document.getElementById('req-card').dataset.bookingId=docId;
+}
+
+async function acceptTrip(){
+  var docId=document.getElementById('req-card').dataset.bookingId;
+  if(!docId)return;
+  try{
+    await window.FS.updateDoc(window.FS.doc(window.db,'bookings',docId),{
+      status:'accepted',
+      driverId:currentDriver.id,
+      driver:{name:currentDriver.name,phone:currentDriver.phone,lat:currentDriver.lat||null,lng:currentDriver.lng||null}
+    });
+    document.getElementById('req-card').style.display='none';
+    toast('Trip accept kar li! Pickup par jao.');
+  }catch(e){toast('Error: '+e.message);}
 }
 
 function rejectTrip(){
@@ -557,51 +958,346 @@ function rejectTrip(){
   toast('Trip decline kar di.');
 }
 
-var uploadedD={};
-function markDoc(key,name,eid,bid){
-  uploadedD[key]=true;
-  document.getElementById(eid).classList.add('upl');
-  var b=document.getElementById(bid);
-  b.textContent='✓ Done';b.className='dbadge done';
-  toast(name+' ready!');
+// ============ DRIVER ONLINE/OFFLINE ============
+function updateOnlineUI(online){
+  driverOnline=online;
+  document.getElementById('sdot').className='sdot'+(online?'':' off');
+  document.getElementById('stxt').textContent=online?'Online — Trip ke liye ready':'Offline';
+  var btn=document.getElementById('stog');
+  btn.textContent=online?'Offline Jao':'Online Jao';
+  btn.style.background=online?'#FFEBEE':'#E8F5E9';
+  btn.style.color=online?'var(--re)':'var(--gr)';
 }
 
-function submitReg(){
-  var n=document.getElementById('drv-name').value;
-  var p=document.getElementById('drv-phone').value;
-  if(!n||!p){toast('Naam aur phone zaroori!');return}
-  toast('Registration submit! Admin 24 ghante mein verify karega.');
-  setTimeout(function(){goTo('driver-dash')},1800);
+async function toggleOnline(){
+  if(!currentDriver)return;
+  var newStatus=driverOnline?'offline':'online';
+  try{
+    await window.FS.updateDoc(window.FS.doc(window.db,'drivers',currentDriver.id),{status:newStatus});
+    currentDriver.status=newStatus;
+    updateOnlineUI(newStatus==='online');
+    toast(newStatus==='online'?'Aap Online ho gaye!':'Aap Offline ho gaye!');
+    if(newStatus==='online')listenForBookings();
+  }catch(e){toast('Error: '+e.message);}
 }
 
-function adminLogin(){
+// ============ LOCATION SHARING ============
+function toggleLocation(){
+  if(locWatchId){
+    navigator.geolocation.clearWatch(locWatchId);locWatchId=null;
+    document.getElementById('loc-status').textContent='Location share OFF';
+    document.getElementById('loc-btn').textContent='🛰️ Location Share Shuru Karo';
+    document.getElementById('drv-mini-map').style.display='none';
+    toast('Location share band.');
+    return;
+  }
+  if(!navigator.geolocation){toast('GPS is device mein nahi hai');return;}
+  document.getElementById('loc-status').innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4CAF50;margin-right:5px;animation:pulse 1.4s infinite"></span><b style="color:#2E7D32">Live Location Share Ho Raha Hai!</b>';
+  document.getElementById('loc-btn').textContent='🔴 Band Karo';
+  document.getElementById('drv-mini-map').style.display='block';
+  if(!drvMiniMap){
+    setTimeout(function(){
+      try{
+        drvMiniMap=L.map('drv-mini-map',{zoomControl:false,attributionControl:false}).setView(jjn,14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(drvMiniMap);
+        var mi=L.divIcon({html:'<div style="background:#E65100;color:#fff;width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:14px">🚛</div>',iconAnchor:[15,15],className:''});
+        var mm=L.marker(jjn,{icon:mi}).addTo(drvMiniMap);
+        locWatchId=navigator.geolocation.watchPosition(function(pos){
+          var ll=[pos.coords.latitude,pos.coords.longitude];
+          mm.setLatLng(ll);drvMiniMap.panTo(ll);
+          if(currentDriver){
+            window.FS.updateDoc(window.FS.doc(window.db,'drivers',currentDriver.id),{lat:ll[0],lng:ll[1]});
+          }
+        },function(){},{ enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+      }catch(e){}
+    },300);
+  }else{
+    locWatchId=navigator.geolocation.watchPosition(function(pos){
+      if(currentDriver){
+        window.FS.updateDoc(window.FS.doc(window.db,'drivers',currentDriver.id),{lat:pos.coords.latitude,lng:pos.coords.longitude});
+      }
+    },function(){},{ enableHighAccuracy:true,timeout:15000,maximumAge:5000});
+  }
+  toast('Location share shuru! Customer aapko dekh sakta hai.');
+}
+
+// ============ ADMIN LOGIN ============
+async function adminLogin(){
   var e=document.getElementById('adm-email').value;
   var p=document.getElementById('adm-pass').value;
-  if(!e||!p){toast('Email aur password daalo!');return}
-  toast('Login ho raha hai...');
-  setTimeout(function(){goTo('admin')},1000);
+  if(!e||!p){toast('Email aur password daalo!');return;}
+  if(!window.dbReady){toast('Loading... thodi der ruko.');return;}
+  try{
+    var snap=await window.FS.getDoc(window.FS.doc(window.db,'admins','main'));
+    if(!snap.exists()){toast('Admin data nahi mila!');return;}
+    var adm=snap.data();
+    if(adm.email===e&&adm.password===p){
+      document.getElementById('adm-email-show').textContent=e;
+      goTo('admin');
+      toast('Admin login successful!');
+    }else{
+      toast('Email ya password galat hai!');
+    }
+  }catch(err){toast('Error: '+err.message);}
 }
 
-function approveDrv(btn){
-  btn.textContent='✓ Approved';btn.className='abtn aok';
-  toast('Driver approve! Use notification milega.');
+function adminLogout(){
+  document.getElementById('adm-email').value='';
+  document.getElementById('adm-pass').value='';
+  goTo('home');
 }
 
+// ============ ADMIN DATA ============
+async function loadAdminData(){
+  loadAdminDrivers();
+  loadAdminBookings();
+  loadRates();
+  loadAdminStats();
+  if(document.getElementById('tl').classList.contains('active'))initAdminMap();
+}
+
+async function loadAdminStats(){
+  try{
+    var [drvs,bks]=await Promise.all([
+      window.FS.getDocs(window.FS.collection(window.db,'drivers')),
+      window.FS.getDocs(window.FS.collection(window.db,'bookings'))
+    ]);
+    document.getElementById('adm-drv-count').textContent=drvs.size;
+    document.getElementById('adm-bk-count').textContent=bks.size;
+    var rev=0;
+    bks.forEach(d=>{if(d.data().status==='completed')rev+=d.data().commission||0;});
+    document.getElementById('adm-rev').textContent='₹'+rev;
+  }catch(e){}
+}
+
+async function loadAdminDrivers(){
+  try{
+    var snap=await window.FS.getDocs(window.FS.query(window.FS.collection(window.db,'drivers'),window.FS.orderBy('createdAt','desc')));
+    var pendHtml='',allHtml='';
+    snap.forEach(function(d){
+      var data=d.data();
+      var init=data.name?data.name.charAt(0):'?';
+      var onlineDot=data.status==='online'?'<span class="dot-g" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4CAF50;margin-right:3px"></span>':'';
+      var row='<div class="drv-row"><div class="dav" style="background:'+(data.status==='online'?'#4CAF50':'#E65100')+'">'+init+'</div>'+
+        '<div class="dinf"><div class="dnm">'+data.name+'</div>'+
+        '<div class="ddt">'+onlineDot+data.vehicle+' • '+data.city+' • '+data.phone+'</div></div>';
+      if(data.approvalStatus==='pending'){
+        row+='<button class="abtn a-ok" onclick="approveDriver(\''+d.id+'\',this)">Approve</button></div>';
+        pendHtml+=row;
+      }else if(data.approvalStatus==='approved'){
+        row+='<button class="abtn a-rej" onclick="rejectDriver(\''+d.id+'\',this)">Reject</button></div>';
+        allHtml+=row;
+      }else{
+        row+='<button class="abtn a-view">Rejected</button></div>';
+        allHtml+=row;
+      }
+    });
+    document.getElementById('pending-drivers').innerHTML=pendHtml||'<div class="empty"><p>Koi pending driver nahi</p></div>';
+    document.getElementById('all-drivers').innerHTML=allHtml||'<div class="empty"><p>Koi approved driver nahi</p></div>';
+  }catch(e){document.getElementById('pending-drivers').innerHTML='<div class="empty"><p>Load nahi ho saka</p></div>';}
+}
+
+async function approveDriver(id,btn){
+  try{
+    await window.FS.updateDoc(window.FS.doc(window.db,'drivers',id),{approvalStatus:'approved'});
+    btn.textContent='✓ Approved';btn.className='abtn a-ok';
+    toast('Driver approve kar diya!');
+    loadAdminDrivers();
+  }catch(e){toast('Error: '+e.message);}
+}
+
+async function rejectDriver(id,btn){
+  try{
+    await window.FS.updateDoc(window.FS.doc(window.db,'drivers',id),{approvalStatus:'rejected',status:'offline'});
+    btn.textContent='Rejected';btn.className='abtn a-rej';
+    toast('Driver reject kar diya.');
+    loadAdminDrivers();
+  }catch(e){toast('Error: '+e.message);}
+}
+
+async function loadAdminBookings(){
+  try{
+    var snap=await window.FS.getDocs(window.FS.query(window.FS.collection(window.db,'bookings'),window.FS.orderBy('createdAt','desc')));
+    var html='';
+    snap.forEach(function(d){
+      var b=d.data();
+      var sclass=b.status==='completed'?'sb-ok':b.status==='cancelled'?'sb-cancel':b.status==='searching'?'sb-pend':'sb-live';
+      var date=b.createdAt&&b.createdAt.toDate?b.createdAt.toDate().toLocaleString('hi'):'-';
+      html+='<div class="bki">'+
+        '<div class="bkid">#'+b.id+' • '+date+'</div>'+
+        '<div class="bkr">'+b.pickup.text+' → '+b.drop.text+'</div>'+
+        '<div class="bkm">'+
+          '<span>'+b.vehicleIcon+' '+b.vehicle+'</span>'+
+          '<span>'+b.km+'km</span>'+
+          '<span>₹'+b.amount+'</span>'+
+          '<span>'+b.customer.name+'</span>'+
+          '<span class="sb '+sclass+'">'+statusText(b.status)+'</span>'+
+        '</div>'+
+        (b.status==='searching'?'<button class="btn btn-re btn-sm" style="margin-top:8px;margin-bottom:0" onclick="cancelBooking(\''+d.id+'\')">Cancel Karo</button>':'')+
+        '</div>';
+    });
+    document.getElementById('all-bookings').innerHTML=html||'<div class="empty"><div class="empty-icon">📦</div><p>Koi booking nahi abhi</p></div>';
+  }catch(e){document.getElementById('all-bookings').innerHTML='<div class="empty"><p>Load nahi ho saka</p></div>';}
+}
+
+async function cancelBooking(id){
+  try{
+    await window.FS.updateDoc(window.FS.doc(window.db,'bookings',id),{status:'cancelled'});
+    toast('Booking cancel kar di.');
+    loadAdminBookings();
+    loadAdminStats();
+  }catch(e){toast('Error: '+e.message);}
+}
+
+// ============ RATES ============
+async function loadRates(){
+  try{
+    var snap=await window.FS.getDoc(window.FS.doc(window.db,'settings','rates'));
+    if(snap.exists()){
+      var r=snap.data();
+      rates=r;
+      if(r['3-Wheeler']){
+        document.getElementById('r-3w-base').value=r['3-Wheeler'].base||50;
+        document.getElementById('r-3w-km').value=r['3-Wheeler'].rate||12;
+        document.getElementById('r-3w-min').value=r['3-Wheeler'].min||80;
+      }
+      if(r['Tempo']){
+        document.getElementById('r-tp-base').value=r['Tempo'].base||80;
+        document.getElementById('r-tp-km').value=r['Tempo'].rate||15;
+        document.getElementById('r-tp-min').value=r['Tempo'].min||120;
+      }
+      if(r['Pickup']){
+        document.getElementById('r-pk-base').value=r['Pickup'].base||100;
+        document.getElementById('r-pk-km').value=r['Pickup'].rate||18;
+        document.getElementById('r-pk-min').value=r['Pickup'].min||150;
+      }
+      if(r['Mini Truck']){
+        document.getElementById('r-mt-base').value=r['Mini Truck'].base||120;
+        document.getElementById('r-mt-km').value=r['Mini Truck'].rate||22;
+        document.getElementById('r-mt-min').value=r['Mini Truck'].min||200;
+      }
+      if(r.commission)document.getElementById('r-comm').value=r.commission||10;
+      if(r.night)document.getElementById('r-night').value=r.night||20;
+      if(r.loading)document.getElementById('r-load').value=r.loading||50;
+      // Update home chips
+      updateHomeRates(r);
+    }
+  }catch(e){}
+}
+
+function updateHomeRates(r){
+  var chips=document.getElementById('home-rates');
+  if(!chips||!r)return;
+  chips.innerHTML=
+    '<span class="chip">🛺 3-Wheeler ₹'+(r['3-Wheeler']?r['3-Wheeler'].rate:12)+'/km</span>'+
+    '<span class="chip">🚐 Tempo ₹'+(r['Tempo']?r['Tempo'].rate:15)+'/km</span>'+
+    '<span class="chip">🛻 Pickup ₹'+(r['Pickup']?r['Pickup'].rate:18)+'/km</span>'+
+    '<span class="chip">🚛 Mini Truck ₹'+(r['Mini Truck']?r['Mini Truck'].rate:22)+'/km</span>';
+  // Update vehicle options
+  document.getElementById('v1').querySelector('.vr').textContent='₹'+(r['3-Wheeler']?r['3-Wheeler'].base:50)+'+₹'+(r['3-Wheeler']?r['3-Wheeler'].rate:12)+'/km';
+  document.getElementById('v2').querySelector('.vr').textContent='₹'+(r['Tempo']?r['Tempo'].base:80)+'+₹'+(r['Tempo']?r['Tempo'].rate:15)+'/km';
+  document.getElementById('v3').querySelector('.vr').textContent='₹'+(r['Pickup']?r['Pickup'].base:100)+'+₹'+(r['Pickup']?r['Pickup'].rate:18)+'/km';
+  document.getElementById('v4').querySelector('.vr').textContent='₹'+(r['Mini Truck']?r['Mini Truck'].base:120)+'+₹'+(r['Mini Truck']?r['Mini Truck'].rate:22)+'/km';
+}
+
+async function saveRates(){
+  var r={
+    '3-Wheeler':{base:parseInt(document.getElementById('r-3w-base').value),rate:parseInt(document.getElementById('r-3w-km').value),min:parseInt(document.getElementById('r-3w-min').value)},
+    'Tempo':{base:parseInt(document.getElementById('r-tp-base').value),rate:parseInt(document.getElementById('r-tp-km').value),min:parseInt(document.getElementById('r-tp-min').value)},
+    'Pickup':{base:parseInt(document.getElementById('r-pk-base').value),rate:parseInt(document.getElementById('r-pk-km').value),min:parseInt(document.getElementById('r-pk-min').value)},
+    'Mini Truck':{base:parseInt(document.getElementById('r-mt-base').value),rate:parseInt(document.getElementById('r-mt-km').value),min:parseInt(document.getElementById('r-mt-min').value)},
+    commission:parseInt(document.getElementById('r-comm').value),
+    night:parseInt(document.getElementById('r-night').value),
+    loading:parseInt(document.getElementById('r-load').value)
+  };
+  try{
+    await window.FS.setDoc(window.FS.doc(window.db,'settings','rates'),r);
+    rates=r;
+    updateHomeRates(r);
+    toast('✓ Rates save aur app mein update ho gaye!');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+// ============ ADMIN PASSWORD CHANGE ============
+async function changeAdminPass(){
+  var np=document.getElementById('new-pass').value;
+  var cp=document.getElementById('confirm-pass').value;
+  if(!np){toast('Naya password daalo!');return;}
+  if(np.length<6){toast('Password kam se kam 6 characters ka hona chahiye!');return;}
+  if(np!==cp){toast('Password match nahi kar raha!');return;}
+  try{
+    await window.FS.updateDoc(window.FS.doc(window.db,'admins','main'),{password:np});
+    document.getElementById('new-pass').value='';document.getElementById('confirm-pass').value='';
+    toast('✓ Password update ho gaya!');
+  }catch(e){toast('Error: '+e.message);}
+}
+
+// ============ ADMIN MAP ============
+function initAdminMap(){
+  var el=document.getElementById('admin-map');
+  if(!el)return;
+  if(adminMap){adminMap.remove();adminMap=null;}
+  setTimeout(async function(){
+    try{
+      adminMap=L.map('admin-map',{attributionControl:false}).setView([28.18,75.45],11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(adminMap);
+      var snap=await window.FS.getDocs(window.FS.query(
+        window.FS.collection(window.db,'drivers'),
+        window.FS.where('status','==','online')
+      ));
+      var liveHtml='';
+      snap.forEach(function(d){
+        var data=d.data();
+        var mk=function(c,t){return L.divIcon({html:'<div style="background:'+c+';color:#fff;width:32px;height:32px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">'+t+'</div>',iconAnchor:[16,16],className:''});};
+        if(data.lat&&data.lng){
+          L.marker([data.lat,data.lng],{icon:mk('#4CAF50',data.name.charAt(0))}).addTo(adminMap).bindPopup('🚛 '+data.name+' — '+data.vehicle);
+        }
+        liveHtml+='<div class="drv-row"><div class="dav" style="background:#4CAF50">'+data.name.charAt(0)+'</div>'+
+          '<div class="dinf"><div class="dnm">'+data.name+'</div><div class="ddt">'+data.vehicle+' • '+data.city+(data.lat?' • 📍 Live':'')+'</div></div></div>';
+      });
+      document.getElementById('live-drivers-list').innerHTML=liveHtml||'<div class="empty"><p>Koi driver online nahi abhi</p></div>';
+    }catch(e){}
+  },400);
+}
+
+// ============ TABS ============
 function showTab(id){
   document.querySelectorAll('.tpane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  var idx={td:0,tb:1,tr:2,tl:3}[id];
-  document.querySelectorAll('.tab')[idx].classList.add('active');
-  if(id==='tl')setTimeout(initAMap,300);
+  var tabs=['ta','tb','tr','tl','ts'];
+  var idx=tabs.indexOf(id);
+  if(idx>=0)document.querySelectorAll('.tab')[idx].classList.add('active');
+  if(id==='tl')setTimeout(initAdminMap,300);
+  if(id==='ta')loadAdminDrivers();
+  if(id==='tb')loadAdminBookings();
 }
 
+// ============ TOAST ============
 function toast(msg){
   var t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
-  setTimeout(function(){t.classList.remove('show')},2800);
+  setTimeout(function(){t.classList.remove('show');},3000);
 }
+
+// ============ INIT ============
 calcPrice();
+// Load rates on start
+setTimeout(function(){if(window.dbReady)loadRates();},2500);
+// Check saved driver login
+var savedDrv=localStorage.getItem('tempodo_driver');
+if(savedDrv){
+  try{
+    var sd=JSON.parse(savedDrv);
+    setTimeout(async function(){
+      if(!window.dbReady){return;}
+      try{
+        var snap=await window.FS.getDocs(window.FS.query(window.FS.collection(window.db,'drivers'),window.FS.where('phone','==',sd.phone)));
+        if(!snap.empty){currentDriver={id:snap.docs[0].id,...snap.docs[0].data()};}
+      }catch(e){}
+    },2000);
+  }catch(e){}
+}
 </script>
 </body>
 </html>
